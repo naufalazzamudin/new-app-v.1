@@ -170,18 +170,6 @@
             <span>Sign In to Dashboard</span>
             <i class="fa-solid fa-arrow-right text-xs"></i>
           </button>
-
-          <!-- Quick Demo Access Bypass -->
-          <div class="pt-2">
-            <button
-              type="button"
-              id="btn-quick-demo"
-              class="w-full py-2.5 px-4 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-300 hover:text-white text-xs font-medium border border-slate-700 transition flex items-center justify-center gap-2"
-            >
-              <i class="fa-solid fa-bolt text-amber-400"></i>
-              <span>Direct Demo Preview (Instant Access)</span>
-            </button>
-          </div>
         </form>
 
         <!-- Supabase Settings Drawer Toggle -->
@@ -241,14 +229,14 @@
     <header class="sticky top-0 z-40 bg-slate-900/90 backdrop-blur-md border-b border-slate-800">
       <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-4">
 
-        <!-- Left: Logo & Mobile Toggle -->
+        <!-- Left: Logo & Menu Toggle (Always hamburger drawer) -->
         <div class="flex items-center gap-2 sm:gap-3 min-w-0">
           <button
             type="button"
             id="mobile-menu-btn"
             onclick="toggleMobileSidebar(true)"
             aria-label="Toggle navigation menu"
-            class="md:hidden p-1.5 sm:p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition text-base"
+            class="p-2 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition text-base flex items-center justify-center border border-slate-700/60"
           >
             <i class="fa-solid fa-bars"></i>
           </button>
@@ -315,24 +303,24 @@
       </div>
     </header>
 
-    <!-- Mobile Sidebar Backdrop Overlay -->
-    <div id="mobile-sidebar-overlay" class="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-sm hidden md:hidden transition-opacity" onclick="toggleMobileSidebar(false)"></div>
+    <!-- Off-Canvas Sidebar Backdrop Overlay (All Screen Sizes) -->
+    <div id="mobile-sidebar-overlay" class="fixed inset-0 z-40 bg-slate-950/80 backdrop-blur-sm hidden transition-opacity" onclick="toggleMobileSidebar(false)"></div>
 
     <!-- Main Workspace Container -->
-    <div class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col md:flex-row gap-4 sm:gap-6">
+    <div class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col gap-4 sm:gap-6">
 
-      <!-- Navigation Sidebar (Slide-out drawer on mobile, static on desktop) -->
-      <aside id="app-sidebar" class="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-slate-900 border-r border-slate-800 p-4 transform -translate-x-full transition-transform duration-300 ease-in-out md:relative md:inset-auto md:z-auto md:w-64 md:translate-x-0 md:bg-transparent md:border-none md:p-0 flex-shrink-0 overflow-y-auto">
-        <div class="glass-panel rounded-2xl p-3 border border-slate-800 md:sticky md:top-24 space-y-1">
-          <!-- Mobile Drawer Header -->
-          <div class="flex items-center justify-between pb-3 mb-2 border-b border-slate-800 md:hidden">
+      <!-- Navigation Sidebar Drawer (Off-canvas on all screens: mobile, tablet, Windows) -->
+      <aside id="app-sidebar" class="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] bg-slate-900 border-r border-slate-800 p-4 transform -translate-x-full transition-transform duration-300 ease-in-out shadow-2xl flex-shrink-0 overflow-y-auto">
+        <div class="glass-panel rounded-2xl p-3 border border-slate-800 space-y-1">
+          <!-- Drawer Header with Close Button -->
+          <div class="flex items-center justify-between pb-3 mb-2 border-b border-slate-800">
             <div class="flex items-center gap-2">
-              <div class="w-7 h-7 rounded-lg bg-brand-600 text-white flex items-center justify-center text-xs">
+              <div class="w-7 h-7 rounded-lg bg-brand-600 text-white flex items-center justify-center text-xs shadow-md">
                 <i class="fa-solid fa-hotel"></i>
               </div>
               <span class="text-xs font-bold text-white">Hotel IT Menu</span>
             </div>
-            <button type="button" onclick="toggleMobileSidebar(false)" class="p-1 rounded-lg text-slate-400 hover:text-white">
+            <button type="button" onclick="toggleMobileSidebar(false)" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
               <i class="fa-solid fa-xmark text-sm"></i>
             </button>
           </div>
@@ -413,8 +401,8 @@
             id="nav-preloved"
             class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition"
           >
-            <i class="fa-solid fa-recycle w-5 text-center text-teal-400"></i>
-            <span>Damaged Device</span>
+            <i class="fa-solid fa-triangle-exclamation w-5 text-center text-teal-400"></i>
+            <span>Damaged Hardware</span>
           </button>
 
           <div class="pt-2 border-t border-slate-800/80 my-2"></div>
@@ -545,7 +533,7 @@
               </div>
               <div class="mt-3 text-2xl font-bold font-mono text-white" id="stat-dept-stock">0</div>
               <div class="mt-1 text-xs text-slate-500 flex items-center justify-between">
-                <span>Across 7 Hotel Depts</span>
+                <span>Across 9 Hotel Depts</span>
                 <i class="fa-solid fa-arrow-right text-[10px] text-slate-600 group-hover:text-amber-400 transition"></i>
               </div>
             </div>
@@ -586,20 +574,20 @@
               </div>
             </div>
 
-            <!-- 5. Preloved Hardware -->
+            <!-- 5. Damaged Hardware -->
             <div
               onclick="navigateTo('preloved')"
               class="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-teal-500/50 transition cursor-pointer group"
             >
               <div class="flex items-center justify-between">
-                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Damaged Device</span>
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Damaged Hardware</span>
                 <div class="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center group-hover:scale-110 transition">
-                  <i class="fa-solid fa-recycle"></i>
+                  <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
               </div>
               <div class="mt-3 text-2xl font-bold font-mono text-white" id="stat-preloved-count">0</div>
               <div class="mt-1 text-xs text-slate-500 flex items-center justify-between">
-                <span>Refurbished & Spares</span>
+                <span>Faulty & Refurbished Spares</span>
                 <i class="fa-solid fa-arrow-right text-[10px] text-slate-600 group-hover:text-teal-400 transition"></i>
               </div>
             </div>
@@ -623,13 +611,13 @@
             </div>
           </div>
 
-          <!-- 7 Official Hotel Departments Grid -->
+          <!-- 9 Official Hotel Departments Grid -->
           <div class="glass-panel rounded-2xl p-6 border border-slate-800">
             <div class="flex items-center justify-between mb-4">
               <div>
                 <h3 class="text-base font-bold text-white flex items-center gap-2">
                   <i class="fa-solid fa-building text-amber-400"></i>
-                  <span>7 Hotel Departments Held Asset Overview</span>
+                  <span>9 Hotel Departments Held Asset Overview</span>
                 </h3>
                 <p class="text-xs text-slate-400 mt-0.5">Click any department card to inspect held hardware items</p>
               </div>
@@ -732,23 +720,24 @@
               <button type="button" onclick="setInvCategoryFilter('PC ITEMS')" class="inv-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white" data-cat="PC ITEMS">PC ITEMS</button>
               <button type="button" onclick="setInvCategoryFilter('NETWORK ITEMS')" class="inv-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white" data-cat="NETWORK ITEMS">NETWORK ITEMS</button>
               <button type="button" onclick="setInvCategoryFilter('CCTV & TV ITEMS')" class="inv-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white" data-cat="CCTV & TV ITEMS">CCTV & TV</button>
+              <button type="button" onclick="setInvCategoryFilter('LOCK SYSTEM')" class="inv-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white" data-cat="LOCK SYSTEM">LOCK SYSTEM</button>
             </div>
           </div>
 
           <!-- Inventory Master Table -->
           <div class="glass-panel rounded-2xl border border-slate-800 overflow-hidden">
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+              <table class="w-full text-left text-xs min-w-[850px]">
                 <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
                   <tr>
-                    <th class="py-3 px-4">Item & Code</th>
-                    <th class="py-3 px-4">Category</th>
-                    <th class="py-3 px-4 text-center">Total In</th>
-                    <th class="py-3 px-4 text-center">Transferred</th>
-                    <th class="py-3 px-4 text-center">Returned</th>
-                    <th class="py-3 px-4 text-center font-bold text-white">Stock Available</th>
-                    <th class="py-3 px-4">Status</th>
-                    <th class="py-3 px-4 text-right">Actions</th>
+                    <th class="py-3 px-4 min-w-[220px]">Item & Code</th>
+                    <th class="py-3 px-4 min-w-[130px] whitespace-nowrap">Category</th>
+                    <th class="py-3 px-4 text-center min-w-[90px] whitespace-nowrap">Total In</th>
+                    <th class="py-3 px-4 text-center min-w-[100px] whitespace-nowrap">Transferred</th>
+                    <th class="py-3 px-4 text-center min-w-[90px] whitespace-nowrap">Returned</th>
+                    <th class="py-3 px-4 text-center font-bold text-white min-w-[120px] whitespace-nowrap">Stock Available</th>
+                    <th class="py-3 px-4 min-w-[110px] whitespace-nowrap">Status</th>
+                    <th class="py-3 px-4 text-right min-w-[130px] whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="inventory-table-body" class="divide-y divide-slate-800/80">
@@ -789,8 +778,7 @@
                     type="text"
                     id="create-item-name"
                     required
-                    placeholder="Contoh: Dell OptiPlex 7090 Desktop Core i7"
-                    class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition"
+                    class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition"
                   >
                 </div>
 
@@ -808,6 +796,7 @@
                     <option value="PC ITEMS">PC ITEMS</option>
                     <option value="NETWORK ITEMS">NETWORK ITEMS</option>
                     <option value="CCTV & TV ITEMS">CCTV & TV ITEMS</option>
+                    <option value="LOCK SYSTEM">LOCK SYSTEM</option>
                   </select>
                 </div>
 
@@ -819,8 +808,7 @@
                   <textarea
                     id="create-item-remark"
                     rows="3"
-                    placeholder="Contoh: Standar spesifikasi meja Front Office, RAM 16GB, SSD 512GB..."
-                    class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition resize-none"
+                    class="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition resize-none"
                   ></textarea>
                 </div>
 
@@ -889,14 +877,14 @@
         </section>
 
         <!-- =================================================================== -->
-        <!-- VIEW 4: DEPARTMENTAL ASSET (7 DEPARTMENTS)                          -->
+        <!-- VIEW 4: DEPARTMENTAL ASSET (9 DEPARTMENTS)                          -->
         <!-- =================================================================== -->
         <section id="view-departmental" class="app-view hidden space-y-6">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h2 class="text-2xl font-extrabold text-white">Departmental Asset Holdings</h2>
               <p class="text-xs text-slate-400 mt-1">
-                Distribusi hardware aktif di 7 Departemen Hotel Resmi (Invariant Inbound - Out + Return)
+                Distribusi hardware aktif di 9 Departemen Hotel Resmi (Invariant Inbound - Out + Return)
               </p>
             </div>
             <div class="flex items-center gap-2">
@@ -919,10 +907,10 @@
             </div>
           </div>
 
-          <!-- 7 Department Navigation Tabs -->
+          <!-- 9 Department Navigation Tabs -->
           <div class="overflow-x-auto pb-1">
             <div class="flex items-center gap-2 min-w-max" id="dept-tabs-bar">
-              <!-- Dynamically populated 7 depts -->
+              <!-- Dynamically populated 9 depts -->
             </div>
           </div>
 
@@ -939,28 +927,29 @@
             </div>
 
             <!-- Sub Filter Kategori -->
-            <div class="flex items-center gap-1.5">
+            <div class="flex flex-wrap items-center gap-1.5">
               <button type="button" onclick="setDeptCatFilter('ALL')" class="dept-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white" data-cat="ALL">ALL</button>
               <button type="button" onclick="setDeptCatFilter('PC ITEMS')" class="dept-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white" data-cat="PC ITEMS">PC</button>
               <button type="button" onclick="setDeptCatFilter('NETWORK ITEMS')" class="dept-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white" data-cat="NETWORK ITEMS">Network</button>
               <button type="button" onclick="setDeptCatFilter('CCTV & TV ITEMS')" class="dept-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white" data-cat="CCTV & TV ITEMS">CCTV/TV</button>
+              <button type="button" onclick="setDeptCatFilter('LOCK SYSTEM')" class="dept-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white" data-cat="LOCK SYSTEM">Lock System</button>
             </div>
           </div>
 
           <!-- Department Assets Table -->
           <div class="glass-panel rounded-2xl border border-slate-800 overflow-hidden">
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+              <table class="w-full text-left text-xs min-w-[850px]">
                 <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
                   <tr>
-                    <th class="py-3 px-4">Asset & Photo</th>
-                    <th class="py-3 px-4">Category</th>
-                    <th class="py-3 px-4 text-center font-bold text-amber-300">Held Units</th>
-                    <th class="py-3 px-4 text-center">Total Received</th>
-                    <th class="py-3 px-4 text-center">Total Returned</th>
-                    <th class="py-3 px-4">Last Recipient / PIC</th>
-                    <th class="py-3 px-4">Last Movement</th>
-                    <th class="py-3 px-4 text-right">Quick Action</th>
+                    <th class="py-3 px-4 min-w-[200px]">Asset & Photo</th>
+                    <th class="py-3 px-4 min-w-[120px] whitespace-nowrap">Category</th>
+                    <th class="py-3 px-4 text-center font-bold text-amber-300 min-w-[90px] whitespace-nowrap">Held Units</th>
+                    <th class="py-3 px-4 text-center min-w-[90px] whitespace-nowrap">Total Received</th>
+                    <th class="py-3 px-4 text-center min-w-[90px] whitespace-nowrap">Total Returned</th>
+                    <th class="py-3 px-4 min-w-[150px] whitespace-nowrap">Last Recipient / PIC</th>
+                    <th class="py-3 px-4 min-w-[120px] whitespace-nowrap">Last Movement</th>
+                    <th class="py-3 px-4 text-right min-w-[110px] whitespace-nowrap">Quick Action</th>
                   </tr>
                 </thead>
                 <tbody id="dept-assets-table-body" class="divide-y divide-slate-800/80">
@@ -1009,12 +998,14 @@
             <div>
               <label class="block text-[11px] font-semibold text-slate-400 mb-1">Filter Department</label>
               <select id="motion-dept-filter" onchange="renderMotionTable()" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white outline-none focus:border-brand-500">
-                <option value="ALL">Semua 7 Departemen</option>
+                <option value="ALL">Semua 9 Departemen</option>
                 <option value="Front Office">Front Office</option>
                 <option value="House Keeping">House Keeping</option>
                 <option value="Engineering">Engineering</option>
                 <option value="Human Resource">Human Resource</option>
-                <option value="Food & Beverage">Food & Beverage</option>
+                <option value="F&B Product">F&B Product</option>
+                <option value="F&B Service">F&B Service</option>
+                <option value="Wellness">Wellness</option>
                 <option value="Sales & Marketing">Sales & Marketing</option>
                 <option value="Accounting">Accounting</option>
               </select>
@@ -1034,17 +1025,17 @@
           <!-- Motion Table -->
           <div class="glass-panel rounded-2xl border border-slate-800 overflow-hidden">
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+              <table class="w-full text-left text-xs min-w-[900px]">
                 <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
                   <tr>
-                    <th class="py-3 px-4">Date & Time</th>
-                    <th class="py-3 px-4">Hardware Item</th>
-                    <th class="py-3 px-4">Category</th>
-                    <th class="py-3 px-4 text-center">Movement Type</th>
-                    <th class="py-3 px-4">Department</th>
-                    <th class="py-3 px-4 text-center">Qty</th>
-                    <th class="py-3 px-4">PIC / Recipient</th>
-                    <th class="py-3 px-4">Remark / Notes</th>
+                    <th class="py-3 px-4 min-w-[130px] whitespace-nowrap">Date & Time</th>
+                    <th class="py-3 px-4 min-w-[200px]">Hardware Item</th>
+                    <th class="py-3 px-4 min-w-[120px] whitespace-nowrap">Category</th>
+                    <th class="py-3 px-4 text-center min-w-[150px] whitespace-nowrap">Movement Type</th>
+                    <th class="py-3 px-4 min-w-[130px] whitespace-nowrap">Department</th>
+                    <th class="py-3 px-4 text-center min-w-[70px] whitespace-nowrap">Qty</th>
+                    <th class="py-3 px-4 min-w-[140px] whitespace-nowrap">PIC / Recipient</th>
+                    <th class="py-3 px-4 min-w-[180px]">Remark / Notes</th>
                   </tr>
                 </thead>
                 <tbody id="motion-table-body" class="divide-y divide-slate-800/80">
@@ -1103,17 +1094,17 @@
           <!-- PO Table -->
           <div class="glass-panel rounded-2xl border border-slate-800 overflow-hidden">
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+              <table class="w-full text-left text-xs min-w-[850px]">
                 <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
                   <tr>
-                    <th class="py-3 px-4">PO & Item Name</th>
-                    <th class="py-3 px-4">Category</th>
-                    <th class="py-3 px-4">Order Date</th>
-                    <th class="py-3 px-4">Arrival Date</th>
-                    <th class="py-3 px-4 text-center">Qty</th>
-                    <th class="py-3 px-4">For Use / Allocation</th>
-                    <th class="py-3 px-4">Status</th>
-                    <th class="py-3 px-4 text-right">Actions</th>
+                    <th class="py-3 px-4 min-w-[200px]">PO & Item Name</th>
+                    <th class="py-3 px-4 min-w-[120px] whitespace-nowrap">Category</th>
+                    <th class="py-3 px-4 min-w-[100px] whitespace-nowrap">Order Date</th>
+                    <th class="py-3 px-4 min-w-[100px] whitespace-nowrap">Arrival Date</th>
+                    <th class="py-3 px-4 text-center min-w-[70px] whitespace-nowrap">Qty</th>
+                    <th class="py-3 px-4 min-w-[160px]">For Use / Allocation</th>
+                    <th class="py-3 px-4 min-w-[120px] whitespace-nowrap">Status</th>
+                    <th class="py-3 px-4 text-right min-w-[100px] whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="po-table-body" class="divide-y divide-slate-800/80">
@@ -1129,14 +1120,14 @@
         </section>
 
         <!-- =================================================================== -->
-        <!-- VIEW 7: PRELOVED ITEMS                                              -->
+        <!-- VIEW 7: DAMAGED HARDWARE                                         -->
         <!-- =================================================================== -->
         <section id="view-preloved" class="app-view hidden space-y-6">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 class="text-2xl font-extrabold text-white">Damaged & Refurbished Hardware</h2>
+              <h2 class="text-2xl font-extrabold text-white">Damaged Hardware</h2>
               <p class="text-xs text-slate-400 mt-1">
-                Koleksi barang bekas layak pakai, spare parts rekondisi, dan ex-kamar hotel
+                Koleksi hardware rusak, spare parts rekondisi, perbaikan, dan ex-kamar hotel
               </p>
             </div>
             <button
@@ -1145,45 +1136,46 @@
               class="px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs shadow-md shadow-teal-500/20 transition flex items-center gap-2"
             >
               <i class="fa-solid fa-plus"></i>
-              <span>+ Add Damaged Item</span>
+              <span>+ Add Damaged Hardware</span>
             </button>
           </div>
 
-          <!-- Preloved Filter Bar -->
+          <!-- Damaged Hardware Filter Bar -->
           <div class="glass-panel rounded-2xl p-4 border border-slate-800 flex flex-col sm:flex-row gap-3 items-center justify-between">
             <div class="relative w-full sm:w-80">
               <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-500 text-xs"></i>
               <input
                 type="text"
                 id="preloved-search"
-                placeholder="Search damaged name, serial number, remark..."
+                placeholder="Search damaged hardware, serial number, remark..."
                 oninput="renderPrelovedTable()"
                 class="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 outline-none focus:border-brand-500"
               >
             </div>
 
-            <!-- Preloved Category Pills -->
+            <!-- Damaged Hardware Category Pills -->
             <div class="flex flex-wrap items-center gap-1.5">
               <button type="button" onclick="setPrelovedCatFilter('ALL')" class="preloved-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white" data-cat="ALL">ALL</button>
               <button type="button" onclick="setPrelovedCatFilter('PC ITEMS')" class="preloved-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white" data-cat="PC ITEMS">PC</button>
               <button type="button" onclick="setPrelovedCatFilter('NETWORK ITEMS')" class="preloved-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white" data-cat="NETWORK ITEMS">Network</button>
               <button type="button" onclick="setPrelovedCatFilter('CCTV & TV ITEMS')" class="preloved-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white" data-cat="CCTV & TV ITEMS">CCTV/TV</button>
+              <button type="button" onclick="setPrelovedCatFilter('LOCK SYSTEM')" class="preloved-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white" data-cat="LOCK SYSTEM">Lock System</button>
             </div>
           </div>
 
-          <!-- Preloved Table -->
+          <!-- Damaged Hardware Table -->
           <div class="glass-panel rounded-2xl border border-slate-800 overflow-hidden">
             <div class="overflow-x-auto">
-              <table class="w-full text-left text-xs">
+              <table class="w-full text-left text-xs min-w-[850px]">
                 <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
                   <tr>
-                    <th class="py-3 px-4">Item & Code</th>
-                    <th class="py-3 px-4">Category</th>
-                    <th class="py-3 px-4">Date Repaired</th>
-                    <th class="py-3 px-4 text-center">Qty</th>
-                    <th class="py-3 px-4">Serial Number</th>
-                    <th class="py-3 px-4">Remark / Ex-Location</th>
-                    <th class="py-3 px-4 text-right">Actions</th>
+                    <th class="py-3 px-4 min-w-[200px]">Item & Code</th>
+                    <th class="py-3 px-4 min-w-[120px] whitespace-nowrap">Category</th>
+                    <th class="py-3 px-4 min-w-[110px] whitespace-nowrap">Date Repaired</th>
+                    <th class="py-3 px-4 text-center min-w-[70px] whitespace-nowrap">Qty</th>
+                    <th class="py-3 px-4 min-w-[140px] whitespace-nowrap">Serial Number</th>
+                    <th class="py-3 px-4 min-w-[180px]">Remark / Ex-Location</th>
+                    <th class="py-3 px-4 text-right min-w-[100px] whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="preloved-table-body" class="divide-y divide-slate-800/80">
@@ -1192,8 +1184,8 @@
               </table>
             </div>
             <div id="preloved-empty-state" class="hidden p-8 text-center text-slate-500">
-              <i class="fa-solid fa-recycle text-3xl mb-2 text-slate-600"></i>
-              <p>Belum ada data Damaged / barang rekondisi.</p>
+              <i class="fa-solid fa-triangle-exclamation text-3xl mb-2 text-slate-600"></i>
+              <p>Belum ada data damaged hardware.</p>
             </div>
           </div>
         </section>
@@ -1242,7 +1234,7 @@
               <i class="fa-solid fa-file-invoice mr-1.5"></i>Purchase Orders
             </button>
             <button type="button" onclick="setMonthlyTab('preloved')" class="monthly-subtab px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white" data-tab="preloved">
-              <i class="fa-solid fa-recycle mr-1.5"></i>Damaged Hardware
+              <i class="fa-solid fa-triangle-exclamation mr-1.5"></i>Damaged Hardware
             </button>
           </div>
 
@@ -1295,7 +1287,7 @@
                 </div>
                 <h3 class="text-base font-bold text-white">Departmental Assets</h3>
                 <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-                  Daftar distribusi hardware di 7 departemen hotel: Front Office, House Keeping, Engineering, HR, F&B, Sales & Accounting.
+                  Daftar distribusi hardware di 9 departemen hotel: Front Office, House Keeping, Engineering, HR, F&B Product, F&B Service, Wellness, Sales & Accounting.
                 </p>
               </div>
               <button
@@ -1350,15 +1342,15 @@
               </button>
             </div>
 
-            <!-- 5. Preloved Hardware Export -->
+            <!-- 5. Damaged Hardware Export -->
             <div class="glass-panel rounded-2xl p-6 border border-slate-800 hover:border-teal-500/50 transition flex flex-col justify-between">
               <div>
                 <div class="w-12 h-12 rounded-2xl bg-teal-500/10 text-teal-400 flex items-center justify-center text-xl mb-4">
-                  <i class="fa-solid fa-recycle"></i>
+                  <i class="fa-solid fa-triangle-exclamation"></i>
                 </div>
-                <h3 class="text-base font-bold text-white">Damaged / Refurbished Hardware</h3>
+                <h3 class="text-base font-bold text-white">Damaged Hardware</h3>
                 <p class="text-xs text-slate-400 mt-2 leading-relaxed">
-                  Data inventaris hardware bekas, spare parts rekondisi, serial number, serta catatan asal unit (ex kamar / ex counter).
+                  Data inventaris hardware rusak, spare parts rekondisi, serial number, serta catatan perbaikan & asal unit.
                 </p>
               </div>
               <button
@@ -1367,7 +1359,7 @@
                 class="mt-6 w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs shadow-md transition flex items-center justify-center gap-2"
               >
                 <i class="fa-solid fa-download"></i>
-                <span>Download Damaged.xlsx</span>
+                <span>Download Damaged_Hardware.xlsx</span>
               </button>
             </div>
 
@@ -1379,7 +1371,7 @@
                 </div>
                 <h3 class="text-base font-bold text-white">Full Hotel IT Master Backup</h3>
                 <p class="text-xs text-slate-300 mt-2 leading-relaxed">
-                  Export satu file workbook .xlsx komprehensif berisi seluruh lembar kerja (Sheets: Inventory, Departmental, Motion, PO, Preloved).
+                  Export satu file workbook .xlsx komprehensif berisi seluruh lembar kerja (Sheets: Inventory, Departmental, Motion, PO, Damaged Hardware).
                 </p>
               </div>
               <button
@@ -1506,21 +1498,6 @@ ALTER TABLE public.preloved DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
               </div>
             </div>
-
-            <!-- Local Demo Data Utilities -->
-            <div class="glass-panel rounded-3xl p-6 md:p-8 border border-slate-800 flex items-center justify-between">
-              <div>
-                <h3 class="text-sm font-bold text-white">Reset Local Cache & Re-seed Demo Data</h3>
-                <p class="text-xs text-slate-400 mt-0.5">Muat ulang data demo standar hotel IT jika ingin mereset state lokal</p>
-              </div>
-              <button
-                type="button"
-                onclick="reloadDemoDataSeed()"
-                class="px-4 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold transition"
-              >
-                Reset Demo Data
-              </button>
-            </div>
           </div>
         </section>
 
@@ -1566,7 +1543,7 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
 
         <div>
           <label class="block text-xs font-semibold text-slate-400 mb-1" for="inbound-remark">Remark / Catatan Inbound</label>
-          <textarea id="inbound-remark" rows="2" placeholder="Contoh: Batch pengadaan baru Q4, PO #12345..." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:border-brand-500 outline-none resize-none"></textarea>
+          <textarea id="inbound-remark" rows="2" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none resize-none"></textarea>
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
@@ -1606,7 +1583,9 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
             <option value="House Keeping">House Keeping</option>
             <option value="Engineering">Engineering</option>
             <option value="Human Resource">Human Resource</option>
-            <option value="Food & Beverage">Food & Beverage</option>
+            <option value="F&B Product">F&B Product</option>
+            <option value="F&B Service">F&B Service</option>
+            <option value="Wellness">Wellness</option>
             <option value="Sales & Marketing">Sales & Marketing</option>
             <option value="Accounting">Accounting</option>
           </select>
@@ -1625,12 +1604,12 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
 
         <div>
           <label class="block text-xs font-semibold text-slate-400 mb-1" for="transfer-recipient">Nama Penerima / PIC Departemen <span class="text-rose-400">*</span></label>
-          <input type="text" id="transfer-recipient" required placeholder="Contoh: Budi Santoso (Duty Manager)" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none">
+          <input type="text" id="transfer-recipient" required class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none">
         </div>
 
         <div>
           <label class="block text-xs font-semibold text-slate-400 mb-1" for="transfer-remark">Keterangan / Alokasi Penempatan</label>
-          <textarea id="transfer-remark" rows="2" placeholder="Contoh: Untuk Counter Receptionist 1-3..." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:border-brand-500 outline-none resize-none"></textarea>
+          <textarea id="transfer-remark" rows="2" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none resize-none"></textarea>
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
@@ -1662,7 +1641,9 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
             <option value="House Keeping">House Keeping</option>
             <option value="Engineering">Engineering</option>
             <option value="Human Resource">Human Resource</option>
-            <option value="Food & Beverage">Food & Beverage</option>
+            <option value="F&B Product">F&B Product</option>
+            <option value="F&B Service">F&B Service</option>
+            <option value="Wellness">Wellness</option>
             <option value="Sales & Marketing">Sales & Marketing</option>
             <option value="Accounting">Accounting</option>
           </select>
@@ -1689,7 +1670,7 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
 
         <div>
           <label class="block text-xs font-semibold text-slate-400 mb-1" for="return-remark">Alasan / Catatan Pengembalian</label>
-          <textarea id="return-remark" rows="2" placeholder="Contoh: Unit rusak ringan perlu servis IT, atau kelebihan unit..." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:border-brand-500 outline-none resize-none"></textarea>
+          <textarea id="return-remark" rows="2" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none resize-none"></textarea>
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
@@ -1697,6 +1678,83 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
           <button type="submit" class="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold shadow-md">Kembalikan ke Stok</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Modal: Item Inbound Stock History -->
+  <div id="modal-item-inbound-history" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel rounded-2xl max-w-2xl w-full p-6 border border-slate-700 shadow-2xl max-h-[90vh] flex flex-col">
+      <div class="flex items-start justify-between pb-4 border-b border-slate-800">
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="modal-hist-category-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-500/10 text-brand-400 border border-brand-500/20">CATEGORY</span>
+            <span id="modal-hist-code-badge" class="text-xs font-mono text-cyan-400 font-semibold">SKU-000</span>
+          </div>
+          <h3 id="modal-hist-item-name" class="text-lg font-bold text-white mt-1">Nama Barang</h3>
+          <p id="modal-hist-subtitle" class="text-xs text-slate-400 mt-0.5">Histori transaksi stok masuk (Inbound) untuk barang ini</p>
+        </div>
+        <button type="button" onclick="closeModal('modal-item-inbound-history')" class="text-slate-400 hover:text-white p-1">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Quick Metrics Summary -->
+      <div class="grid grid-cols-3 gap-3 my-4">
+        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+          <div class="text-[11px] font-medium text-slate-400 uppercase">Total Masuk</div>
+          <div id="modal-hist-total-in" class="text-xl font-bold font-mono text-cyan-400 mt-0.5">0</div>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+          <div class="text-[11px] font-medium text-slate-400 uppercase">Frekuensi Inbound</div>
+          <div id="modal-hist-tx-count" class="text-xl font-bold font-mono text-purple-400 mt-0.5">0</div>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+          <div class="text-[11px] font-medium text-slate-400 uppercase">Stok Aktif IT</div>
+          <div id="modal-hist-active-stock" class="text-xl font-bold font-mono text-emerald-400 mt-0.5">0</div>
+        </div>
+      </div>
+
+      <!-- History Table Container -->
+      <div class="overflow-y-auto flex-1 border border-slate-800 rounded-xl overflow-hidden min-h-[180px]">
+        <table class="w-full text-left text-xs min-w-[550px]">
+          <thead class="bg-slate-900/90 text-slate-400 uppercase text-[10px] font-semibold sticky top-0 border-b border-slate-800">
+            <tr>
+              <th class="py-2.5 px-3 w-10 text-center">No</th>
+              <th class="py-2.5 px-3 min-w-[100px] whitespace-nowrap">Tanggal Masuk</th>
+              <th class="py-2.5 px-3 text-center min-w-[90px] whitespace-nowrap">Jumlah Unit</th>
+              <th class="py-2.5 px-4 min-w-[180px]">Remark / Catatan</th>
+              <th class="py-2.5 px-3 min-w-[130px] whitespace-nowrap">Ditambahkan Oleh</th>
+            </tr>
+          </thead>
+          <tbody id="modal-hist-tbody" class="divide-y divide-slate-800/80 bg-slate-950/40">
+            <!-- Dynamically populated rows -->
+          </tbody>
+        </table>
+        <div id="modal-hist-empty" class="hidden p-8 text-center text-slate-500">
+          <i class="fa-solid fa-box-open text-2xl mb-1 text-slate-600"></i>
+          <p>Belum ada transaksi stok masuk yang tercatat untuk barang ini.</p>
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="flex items-center justify-between pt-4 mt-4 border-t border-slate-800">
+        <button
+          type="button"
+          id="btn-modal-hist-inbound"
+          onclick="openInboundForCurrentItem()"
+          class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold shadow-md transition flex items-center gap-2"
+        >
+          <i class="fa-solid fa-box-open"></i>
+          <span>+ Tambah Stok Masuk Untuk Barang Ini</span>
+        </button>
+        <button
+          type="button"
+          onclick="closeModal('modal-item-inbound-history')"
+          class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"
+        >
+          Tutup
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1716,27 +1774,51 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
       <form id="form-po" class="space-y-4 mt-4">
         <input type="hidden" id="po-edit-id">
 
+        <!-- Master Item Selection with Live Search Filter -->
         <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1" for="po-item-name">Nama Barang PO <span class="text-rose-400">*</span></label>
-          <input type="text" id="po-item-name" required placeholder="Contoh: Keyboard Wireless Logitech MK270" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none">
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1" for="po-category">Kategori <span class="text-rose-400">*</span></label>
-            <select id="po-category" required class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none">
-              <option value="PC ITEMS">PC ITEMS</option>
-              <option value="NETWORK ITEMS">NETWORK ITEMS</option>
-              <option value="CCTV & TV ITEMS">CCTV & TV ITEMS</option>
+          <label class="block text-xs font-semibold text-slate-400 mb-1" for="po-master-item-id">
+            Pilih Barang dari Master Item <span class="text-rose-400">*</span>
+          </label>
+          <div class="space-y-2">
+            <div class="relative">
+              <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+              <input
+                type="text"
+                id="po-item-search"
+                placeholder="Cari master item (nama, kode, model)..."
+                oninput="filterPOMasterItemDropdown(this.value)"
+                class="w-full pl-8 pr-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 outline-none focus:border-brand-500"
+              >
+            </div>
+            <select
+              id="po-master-item-id"
+              required
+              onchange="handlePOMasterItemSelect()"
+              class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none"
+            >
+              <!-- Dynamically populated from master items -->
             </select>
           </div>
+          <!-- Auto-bound info box -->
+          <div id="po-item-selected-info" class="mt-2 p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 text-xs flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-slate-400">Kategori Terkait:</span>
+              <span id="po-info-category" class="font-semibold text-brand-300">-</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-slate-400">Kode:</span>
+              <span id="po-info-code" class="font-mono text-cyan-300">-</span>
+            </div>
+          </div>
+          <input type="hidden" id="po-item-name">
+          <input type="hidden" id="po-category">
+        </div>
+
+        <div class="grid grid-cols-3 gap-3">
           <div>
             <label class="block text-xs font-semibold text-slate-400 mb-1" for="po-qty">Quantity <span class="text-rose-400">*</span></label>
             <input type="number" id="po-qty" required min="1" value="1" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white font-mono focus:border-brand-500 outline-none">
           </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold text-slate-400 mb-1" for="po-date-order">Tanggal Order <span class="text-rose-400">*</span></label>
             <input type="date" id="po-date-order" required class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white font-mono focus:border-brand-500 outline-none">
@@ -1752,17 +1834,17 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
 
         <div>
           <label class="block text-xs font-semibold text-slate-400 mb-1" for="po-for-use">Peruntukan / For Use <span class="text-rose-400">*</span></label>
-          <input type="text" id="po-for-use" required placeholder="Contoh: Stok Pengganti Front Office & Executive Office" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none">
+          <input type="text" id="po-for-use" required class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none">
         </div>
 
         <div>
           <label class="block text-xs font-semibold text-slate-400 mb-1" for="po-vendor">Nama Vendor / Toko</label>
-          <input type="text" id="po-vendor" placeholder="Contoh: Surya Komputer Jakarta" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none">
+          <input type="text" id="po-vendor" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none">
         </div>
 
         <div>
           <label class="block text-xs font-semibold text-slate-400 mb-1" for="po-remarks">Catatan / Remarks</label>
-          <textarea id="po-remarks" rows="2" placeholder="Nomor resi, garansi, atau catatan tambahan..." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:border-brand-500 outline-none resize-none"></textarea>
+          <textarea id="po-remarks" rows="2" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none resize-none"></textarea>
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
@@ -1773,12 +1855,12 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
     </div>
   </div>
 
-  <!-- Modal: Preloved Item Form -->
+  <!-- Modal: Damaged Hardware Form -->
   <div id="modal-preloved" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
     <div class="glass-panel rounded-2xl max-w-lg w-full p-6 border border-slate-700 shadow-2xl">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800">
         <h3 class="text-base font-bold text-white flex items-center gap-2">
-          <i class="fa-solid fa-recycle text-teal-400"></i>
+          <i class="fa-solid fa-triangle-exclamation text-teal-400"></i>
           <span id="preloved-modal-title">Add Damaged Hardware</span>
         </h3>
         <button type="button" onclick="closeModal('modal-preloved')" class="text-slate-400 hover:text-white">
@@ -1790,8 +1872,8 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
         <input type="hidden" id="preloved-edit-id">
 
         <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1" for="preloved-item-name">Nama Barang Rekondisi <span class="text-rose-400">*</span></label>
-          <input type="text" id="preloved-item-name" required placeholder="Contoh: HP ProDesk 400 G4 Desktop (Refurbished)" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none">
+          <label class="block text-xs font-semibold text-slate-400 mb-1" for="preloved-item-name">Nama Perangkat Rusak / Rekondisi <span class="text-rose-400">*</span></label>
+          <input type="text" id="preloved-item-name" required class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none">
         </div>
 
         <div class="grid grid-cols-2 gap-3">
@@ -1801,6 +1883,7 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
               <option value="PC ITEMS">PC ITEMS</option>
               <option value="NETWORK ITEMS">NETWORK ITEMS</option>
               <option value="CCTV & TV ITEMS">CCTV & TV ITEMS</option>
+              <option value="LOCK SYSTEM">LOCK SYSTEM</option>
             </select>
           </div>
           <div>
@@ -1811,23 +1894,23 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-400 mb-1" for="preloved-date">Tanggal Dibereskan <span class="text-rose-400">*</span></label>
+            <label class="block text-xs font-semibold text-slate-400 mb-1" for="preloved-date">Tanggal Perbaikan / Pengecekan <span class="text-rose-400">*</span></label>
             <input type="date" id="preloved-date" required class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white font-mono focus:border-brand-500 outline-none">
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-400 mb-1" for="preloved-serial">Serial Number</label>
-            <input type="text" id="preloved-serial" placeholder="SN-12345678" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none">
+            <input type="text" id="preloved-serial" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none">
           </div>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1" for="preloved-remark">Remark (Ex-Location / Kondisi)</label>
-          <textarea id="preloved-remark" rows="2" placeholder="Contoh: Ex Front Office counter. RAM upgraded to 16GB, SSD 256GB baru..." class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:border-brand-500 outline-none resize-none"></textarea>
+          <label class="block text-xs font-semibold text-slate-400 mb-1" for="preloved-remark">Remark (Ex-Location / Catatan Kerusakan)</label>
+          <textarea id="preloved-remark" rows="2" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none resize-none"></textarea>
         </div>
 
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
           <button type="button" onclick="closeModal('modal-preloved')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700">Batal</button>
-          <button type="submit" class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold shadow-md">Simpan Damaged</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold shadow-md">Simpan Damaged Hardware</button>
         </div>
       </form>
     </div>

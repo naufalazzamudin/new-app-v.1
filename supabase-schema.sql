@@ -24,7 +24,7 @@ CREATE TABLE public.master_items (
   id TEXT PRIMARY KEY,
   item_code TEXT,
   item_name TEXT NOT NULL,
-  category TEXT NOT NULL CHECK (category IN ('PC ITEMS', 'NETWORK ITEMS', 'CCTV & TV ITEMS')),
+  category TEXT NOT NULL CHECK (category IN ('PC ITEMS', 'NETWORK ITEMS', 'CCTV & TV ITEMS', 'LOCK SYSTEM')),
   remark TEXT,
   photo_url TEXT,
   is_active BOOLEAN NOT NULL DEFAULT true,
@@ -64,7 +64,9 @@ CREATE TABLE public.department_movements (
     'House Keeping',
     'Engineering',
     'Human Resource',
-    'Food & Beverage',
+    'F&B Product',
+    'F&B Service',
+    'Wellness',
     'Sales & Marketing',
     'Accounting'
   )),
@@ -88,8 +90,9 @@ CREATE INDEX idx_dept_movements_date ON public.department_movements(date);
 CREATE TABLE public.purchase_orders (
   id TEXT PRIMARY KEY,
   po_number TEXT,
+  item_id TEXT REFERENCES public.master_items(id) ON DELETE SET NULL,
   item_name TEXT NOT NULL,
-  category TEXT NOT NULL DEFAULT 'PC ITEMS',
+  category TEXT NOT NULL CHECK (category IN ('PC ITEMS', 'NETWORK ITEMS', 'CCTV & TV ITEMS', 'LOCK SYSTEM')),
   photo_url TEXT,
   date_order DATE NOT NULL DEFAULT CURRENT_DATE,
   date_arrival DATE,
@@ -105,16 +108,17 @@ CREATE TABLE public.purchase_orders (
 );
 
 CREATE INDEX idx_po_status ON public.purchase_orders(status);
+CREATE INDEX idx_po_item_id ON public.purchase_orders(item_id);
 CREATE INDEX idx_po_date_order ON public.purchase_orders(date_order);
 
 -- ==============================================================================
--- 7. TABLE: preloved (Hardware Bekas / Refurbished / Spare Parts)
+-- 7. TABLE: preloved (Damaged Hardware & Refurbished Spare Parts)
 -- ==============================================================================
 CREATE TABLE public.preloved (
   id TEXT PRIMARY KEY,
   item_code TEXT,
   item_name TEXT NOT NULL,
-  category TEXT NOT NULL CHECK (category IN ('PC ITEMS', 'NETWORK ITEMS', 'CCTV & TV ITEMS')),
+  category TEXT NOT NULL CHECK (category IN ('PC ITEMS', 'NETWORK ITEMS', 'CCTV & TV ITEMS', 'LOCK SYSTEM')),
   date_repaired DATE NOT NULL DEFAULT CURRENT_DATE,
   quantity INTEGER NOT NULL DEFAULT 1 CHECK (quantity > 0),
   serial_number TEXT,
@@ -186,7 +190,8 @@ VALUES
 ('item-003', 'NET-001', 'Cisco Catalyst 2960-X 48-Port PoE Switch', 'NETWORK ITEMS', 'Floor Distribution & AP Core Switch', 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&auto=format&fit=crop&q=80', 'admin@hotel.com', 'admin@hotel.com'),
 ('item-004', 'NET-002', 'Ubiquiti UniFi U6-Pro WiFi 6 Access Point', 'NETWORK ITEMS', 'Guest Corridor & Ball Room Access Points', 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&auto=format&fit=crop&q=80', 'admin@hotel.com', 'admin@hotel.com'),
 ('item-005', 'CCTV-001', 'Hikvision 4MP IP Dome Camera DS-2CD2143G2-I', 'CCTV & TV ITEMS', 'Lobby & Corridor Night Vision Surveillance', 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=400&auto=format&fit=crop&q=80', 'admin@hotel.com', 'admin@hotel.com'),
-('item-006', 'CCTV-002', 'Samsung 50" Crystal 4K UHD Smart Hospitality TV', 'CCTV & TV ITEMS', 'Guest Room & Executive Lounge Display', 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=400&auto=format&fit=crop&q=80', 'admin@hotel.com', 'admin@hotel.com')
+('item-006', 'CCTV-002', 'Samsung 50" Crystal 4K UHD Smart Hospitality TV', 'CCTV & TV ITEMS', 'Guest Room & Executive Lounge Display', 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=400&auto=format&fit=crop&q=80', 'admin@hotel.com', 'admin@hotel.com'),
+('item-007', 'LCK-001', 'Vingcard Essence RFID Electronic Door Lock', 'LOCK SYSTEM', 'Guest Room RFID Smart Door Lock System', 'https://images.unsplash.com/photo-1558002038-1055907df827?w=400&auto=format&fit=crop&q=80', 'admin@hotel.com', 'admin@hotel.com')
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Inbound Stock Transactions (Stok Masuk)
@@ -197,7 +202,8 @@ VALUES
 ('tx-003', 'item-003', CURRENT_DATE - INTERVAL '15 days', 6, 'Cadangan Switch Server Room', 'admin@hotel.com'),
 ('tx-004', 'item-004', CURRENT_DATE - INTERVAL '5 days', 20, 'Ekspansi WiFi Lantai 3-5', 'admin@hotel.com'),
 ('tx-005', 'item-005', CURRENT_DATE - INTERVAL '12 days', 25, 'Replacement CCTV Unit', 'admin@hotel.com'),
-('tx-006', 'item-006', CURRENT_DATE - INTERVAL '20 days', 12, 'Stok Spare TV Kamar Deluxe', 'admin@hotel.com')
+('tx-006', 'item-006', CURRENT_DATE - INTERVAL '20 days', 12, 'Stok Spare TV Kamar Deluxe', 'admin@hotel.com'),
+('tx-007', 'item-007', CURRENT_DATE - INTERVAL '4 days', 18, 'Pengadaan Unit Cadangan Vingcard Lock', 'admin@hotel.com')
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Department Movements (Transfer & Return)
@@ -208,23 +214,28 @@ VALUES
 ('mov-003', 'item-002', 'Sales & Marketing', 'TRANSFER_TO_DEPARTMENT', 2, CURRENT_DATE - INTERVAL '4 days', 'Rian Pratama (DOSM)', 'Laptop untuk Sales Executive Client Visit', 'admin@hotel.com'),
 ('mov-004', 'item-004', 'Engineering', 'TRANSFER_TO_DEPARTMENT', 5, CURRENT_DATE - INTERVAL '3 days', 'Agus Setiawan (Chief Eng)', 'Pemasangan AP Area Pre-function', 'admin@hotel.com'),
 ('mov-005', 'item-005', 'House Keeping', 'TRANSFER_TO_DEPARTMENT', 2, CURRENT_DATE - INTERVAL '2 days', 'Lina Marlina (HK Mgr)', 'CCTV Koridor Linen Room', 'admin@hotel.com'),
-('mov-006', 'item-001', 'Front Office', 'RETURN_TO_INVENTORY', 1, CURRENT_DATE - INTERVAL '1 days', 'Budi Santoso (FOM)', 'Kembali ke IT untuk maintenance berkala', 'admin@hotel.com')
+('mov-006', 'item-001', 'Front Office', 'RETURN_TO_INVENTORY', 1, CURRENT_DATE - INTERVAL '1 days', 'Budi Santoso (FOM)', 'Kembali ke IT untuk maintenance berkala', 'admin@hotel.com'),
+('mov-007', 'item-007', 'Engineering', 'TRANSFER_TO_DEPARTMENT', 4, CURRENT_DATE - INTERVAL '2 days', 'Hendra (Lock Eng)', 'Pemasangan Lock Kamar 201-204', 'admin@hotel.com'),
+('mov-008', 'item-002', 'F&B Service', 'TRANSFER_TO_DEPARTMENT', 1, CURRENT_DATE - INTERVAL '3 days', 'Captain Resto (FBS)', 'Laptop Kasir POS Resto', 'admin@hotel.com'),
+('mov-009', 'item-001', 'F&B Product', 'TRANSFER_TO_DEPARTMENT', 1, CURRENT_DATE - INTERVAL '3 days', 'Chef Executive (FBP)', 'PC Kitchen Display System', 'admin@hotel.com'),
+('mov-010', 'item-004', 'Wellness', 'TRANSFER_TO_DEPARTMENT', 1, CURRENT_DATE - INTERVAL '2 days', 'Spa & Fitness Supervisor', 'AP Ruang Gym & Spa', 'admin@hotel.com')
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Purchase Orders
-INSERT INTO public.purchase_orders (id, po_number, item_name, category, photo_url, date_order, date_arrival, quantity, for_use, remarks, vendor, status, created_by, updated_by)
+INSERT INTO public.purchase_orders (id, po_number, item_id, item_name, category, photo_url, date_order, date_arrival, quantity, for_use, remarks, vendor, status, created_by, updated_by)
 VALUES
-('po-001', 'PO-2026-10-001', 'Logitech MK270 Wireless Keyboard & Mouse Combo', 'PC ITEMS', 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400&auto=format&fit=crop&q=80', CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE - INTERVAL '2 days', 20, 'Stock Keyboard Replacement All Depts', 'Vendor Surya Komputer Jakarta', 'Surya Komputer', 'SUDAH DATANG', 'admin@hotel.com', 'admin@hotel.com'),
-('po-002', 'PO-2026-10-002', 'Cat6 UTP Cable Belden 305m Roll', 'NETWORK ITEMS', 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&auto=format&fit=crop&q=80', CURRENT_DATE - INTERVAL '5 days', NULL, 3, 'Peremajaan Kabel LAN Gedung Annex', 'Kabelindo Jaya Mandiri', 'Kabelindo Jaya', 'BELUM DATANG', 'admin@hotel.com', 'admin@hotel.com'),
-('po-003', 'PO-2026-10-003', 'Hikvision 16-Channel NVR 4K DS-7616NI-Q2', 'CCTV & TV ITEMS', 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=400&auto=format&fit=crop&q=80', CURRENT_DATE - INTERVAL '3 days', NULL, 1, 'Upgrade Server CCTV Ruang Security', 'Security CCTV Specialist', 'Security CCTV Specialist', 'BELUM DATANG', 'admin@hotel.com', 'admin@hotel.com')
+('po-001', 'PO-2026-10-001', 'item-001', 'Dell OptiPlex 7090 Desktop Intel Core i7', 'PC ITEMS', 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400&auto=format&fit=crop&q=80', CURRENT_DATE - INTERVAL '14 days', CURRENT_DATE - INTERVAL '2 days', 20, 'Stock Workstation Replacement All Depts', 'Surya Komputer', 'Surya Komputer', 'SUDAH DATANG', 'admin@hotel.com', 'admin@hotel.com'),
+('po-002', 'PO-2026-10-002', 'item-003', 'Cisco Catalyst 2960-X 48-Port PoE Switch', 'NETWORK ITEMS', 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&auto=format&fit=crop&q=80', CURRENT_DATE - INTERVAL '5 days', NULL, 3, 'Peremajaan Switch Gedung Annex', 'Kabelindo Jaya', 'Kabelindo Jaya', 'BELUM DATANG', 'admin@hotel.com', 'admin@hotel.com'),
+('po-003', 'PO-2026-10-003', 'item-005', 'Hikvision 4MP IP Dome Camera DS-2CD2143G2-I', 'CCTV & TV ITEMS', 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=400&auto=format&fit=crop&q=80', CURRENT_DATE - INTERVAL '3 days', NULL, 1, 'Upgrade Server CCTV Ruang Security', 'Security CCTV Specialist', 'Security CCTV Specialist', 'BELUM DATANG', 'admin@hotel.com', 'admin@hotel.com')
 ON CONFLICT (id) DO NOTHING;
 
--- Seed Preloved Hardware
+-- Seed Preloved / Damaged Hardware
 INSERT INTO public.preloved (id, item_code, item_name, category, date_repaired, quantity, serial_number, remark, photo_url, created_by, updated_by)
 VALUES
 ('pre-001', 'PRE-PC-01', 'HP ProDesk 400 G4 Desktop (Refurbished)', 'PC ITEMS', CURRENT_DATE - INTERVAL '12 days', 2, 'SN-HP-99201A', 'Ex Front Office counter. RAM upgraded to 16GB, SSD 256GB baru', 'https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=400&auto=format&fit=crop&q=80', 'admin@hotel.com', 'admin@hotel.com'),
 ('pre-002', 'PRE-NET-01', 'MikroTik Cloud Router RB1100AHx4', 'NETWORK ITEMS', CURRENT_DATE - INTERVAL '8 days', 1, 'SN-MT-48218C', 'Ex Core Backup. Sudah di-reset default RouterOS v7.14', 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&auto=format&fit=crop&q=80', 'admin@hotel.com', 'admin@hotel.com'),
-('pre-003', 'PRE-CCTV-01', 'LG 43" Commercial TV 43UN7100 (Ex Guest Room)', 'CCTV & TV ITEMS', CURRENT_DATE - INTERVAL '4 days', 3, 'SN-LG-88319X', 'Ex Kamar 401-403, kondisi layar mulus 95%, lengkap remote & bracket', 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=400&auto=format&fit=crop&q=80', 'admin@hotel.com', 'admin@hotel.com')
+('pre-003', 'PRE-CCTV-01', 'LG 43" Commercial TV 43UN7100 (Ex Guest Room)', 'CCTV & TV ITEMS', CURRENT_DATE - INTERVAL '4 days', 3, 'SN-LG-88319X', 'Ex Kamar 401-403, kondisi layar mulus 95%, lengkap remote & bracket', 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=400&auto=format&fit=crop&q=80', 'admin@hotel.com', 'admin@hotel.com'),
+('pre-004', 'PRE-LCK-01', 'Vingcard Classic Magnetic Lock Reader Module', 'LOCK SYSTEM', CURRENT_DATE - INTERVAL '2 days', 4, 'SN-VC-33019M', 'Ex Kamar Lantai 1, motherboard lock disolder ulang & kalibrasi reader OK', 'https://images.unsplash.com/photo-1558002038-1055907df827?w=400&auto=format&fit=crop&q=80', 'admin@hotel.com', 'admin@hotel.com')
 ON CONFLICT (id) DO NOTHING;
 
 -- Seed Initial Activities Log

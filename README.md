@@ -28,59 +28,64 @@ Seluruh data dan autentikasi terhubung langsung ke **Supabase** sebagai satu-sat
 
 - **Dashboard Real-Time**: 
   - **Dynamic Personalized Greeting**: Menyapa pengguna berdasarkan email akun tanpa domain (misal `adminhotel@gmail.com` menjadi `Welcome Adminhotel! What are we diving into today?😉`).
-  - **Mobile Off-Canvas Navigation**: Header bar rapi dan bebas overflow di layar ponsel dengan drawer sidebar responsif, animasi transisi halus, dan auto-close saat navigasi.
+  - **Universal Off-Canvas Navigation Drawer**: Bilah navigasi samping tertutup rapi di dalam tombol menu hamburger (garis tiga) di semua ukuran layar (Desktop Windows, Tablet, Ponsel). Mengklik tombol membuka slide-out drawer dengan backdrop blur dan auto-close saat navigasi.
   - Hero action banner dengan aksi cepat (`+ Add Departmental Asset`, `+ Inbound Stock`, `+ Create Master Item`, `Export All Excel`).
-  - 6 Kartu statistik interaktif: Stok Tersedia di Gudang IT, Unit Dipegang Departemen, Katalog Barang, Purchase Orders, Preloved, dan Total Mutasi.
-  - Ringkasan cepat 7 Departemen Hotel Resmi beserta jumlah unit hardware yang dipegang.
-  - Distribusi kategori barang (PC, Network, CCTV/TV) dan audit log aktivitas terkini.
+  - 6 Kartu statistik interaktif: Stok Tersedia di Gudang IT, Unit Dipegang Departemen, Katalog Barang, Purchase Orders, Damaged Hardware, dan Total Mutasi.
+  - Ringkasan cepat 9 Departemen Hotel Resmi beserta jumlah unit hardware yang dipegang.
+  - Distribusi kategori barang (PC ITEMS, NETWORK ITEMS, CCTV & TV ITEMS, LOCK SYSTEM) dan audit log aktivitas terkini.
 
 - **Inventory / Master Catalog**:
-  - Filter kategori (`ALL`, `PC ITEMS`, `NETWORK ITEMS`, `CCTV & TV ITEMS`) dan pencarian real-time.
+  - Filter kategori (`ALL`, `PC ITEMS`, `NETWORK ITEMS`, `CCTV & TV ITEMS`, `LOCK SYSTEM`) dan pencarian real-time.
+  - **Inbound Stock History Modal**: Mengklik nama/baris barang langsung menampilkan modal histori stok masuk (jumlah unit, tanggal masuk, remark/catatan, dan staf yang menambahkan).
   - Rekapitulasi unit: **Total Inbound**, **Transferred to Depts**, **Returned to IT**, dan **Stok Tersedia di IT**.
   - Status stok otomatis (`In Stock`, `Low Stock`, `Out of Stock`).
-  - Tombol aksi cepat: Transfer ke departemen, Tambah stok masuk, dan Hapus.
+  - Tombol aksi cepat: Riwayat Inbound, Transfer ke departemen, Tambah stok masuk, dan Hapus.
 
 - **Create Master Item**:
-  - Formulir penambahan master barang baru dengan 4 field:
+  - Formulir penambahan master barang baru dengan 4 field bersih tanpa placeholder:
     1. **Nama Barang** (wajib diisi).
-    2. **Kategori Barang** (wajib dipilih: PC ITEMS, NETWORK ITEMS, CCTV & TV ITEMS).
+    2. **Kategori Barang** (wajib dipilih: PC ITEMS, NETWORK ITEMS, CCTV & TV ITEMS, LOCK SYSTEM).
     3. **Remark / Keterangan** (opsional).
     4. **Foto Barang** (opsional, unggah berkas atau tautan URL dengan pratinjau instan).
 
-- **Departmental Asset (7 Departemen Resmi)**:
-  - 7 Tab navigasi departemen hotel resmi:
+- **Departmental Asset (9 Departemen Resmi)**:
+  - 9 Tab navigasi departemen hotel resmi:
     1. **Front Office**
     2. **House Keeping**
     3. **Engineering**
     4. **Human Resource**
-    5. **Food & Beverage**
-    6. **Sales & Marketing**
-    7. **Accounting**
+    5. **F&B Product**
+    6. **F&B Service**
+    7. **Wellness**
+    8. **Sales & Marketing**
+    9. **Accounting**
   - Tabel aset yang sedang dipegang departemen, nama penerima/PIC, tanggal terakhir perpindahan, dan tombol **Return to IT** untuk mengembalikan barang ke gudang stok IT.
 
 - **Motion Analytics & Audit Trail**:
   - Log kronologis lengkap seluruh transaksi mutasi (Transfer ke Departemen & Pengembalian ke IT).
-  - Filter berdasarkan jenis mutasi, departemen, dan pencarian PIC/barang.
+  - Filter berdasarkan jenis mutasi, 9 departemen, dan pencarian PIC/barang.
 
-- **Purchase Orders (PO)**:
-  - Manajemen pengadaan barang baru, monitoring status (`BELUM DATANG` / `SUDAH DATANG`), jumlah unit, vendor, tanggal pemesanan, dan peruntukan alokasi.
+- **Purchase Orders (PO) — Terhubung ke Master Items**:
+  - Barang yang dipesan dipilih langsung dari katalog **Master Items** menggunakan dropdown dengan filter/pencarian langsung (Live Search).
+  - Kategori barang secara otomatis mewarisi kategori dari master item terpilih.
+  - Manajemen status pengadaan (`BELUM DATANG` / `SUDAH DATANG`), quantity, vendor, tanggal pemesanan, dan peruntukan alokasi.
 
-- **Preloved & Refurbished Hardware**:
-  - Pencatatan hardware bekas layak pakai, spare parts rekondisi, serial number, tanggal perbaikan, dan lokasi asal (ex-kamar atau ex-counter).
+- **Damaged Hardware**:
+  - Pencatatan hardware rusak, spare parts rekondisi, perbaikan, serial number, tanggal perbaikan/pengecekan, dan lokasi asal (ex-kamar atau ex-counter).
 
 - **Monthly Data & Reports**:
   - Pemilih bulan dan tahun (misal: 2026-10).
-  - Tab rekapitulasi bulanan: Inbound Stok, Mutasi Departemen, Purchase Orders, dan Preloved.
+  - Tab rekapitulasi bulanan: Inbound Stok, Mutasi Departemen, Purchase Orders, dan Damaged Hardware.
   - Ekspor laporan bulanan khusus dalam satu klik.
 
 - **Export Excel Hub (SheetJS)**:
   - Ekspor 100% di sisi peramban (client-side) tanpa dependensi backend Node.js.
-  - Pilihan file: Master Inventory, Departmental Assets, Motion Log, Purchase Orders, Preloved, dan **Full Master Backup (Multi-Sheet Workbook)**.
+  - Pilihan file: Master Inventory, Departmental Assets (9 Depts), Motion Log, Purchase Orders, Damaged Hardware, dan **Full Master Backup (Multi-Sheet Workbook)**.
 
 - **Settings & BaaS Configuration**:
   - Konfigurasi Supabase Project URL & Anon Key dinamis yang tersimpan di `localStorage`.
   - Mode Demo Offline otomatis jika belum ada konfigurasi Supabase (aplikasi langsung bisa dicoba tanpa layar blank).
-  - Tombol salin skema SQL dan reset data demo.
+  - Tombol salin skema SQL.
 
 ---
 
@@ -108,14 +113,14 @@ Untuk menghubungkan aplikasi ke proyek Supabase milik Anda:
 3. Buka file `supabase-schema.sql` di repositori ini, salin seluruh isinya, lalu tempelkan ke SQL Editor Supabase.
 4. Klik tombol **Run**.
 5. Skrip akan membuat tabel-tabel berikut dengan RLS dinonaktifkan:
-   - `master_items`
+   - `master_items` (kategori: PC ITEMS, NETWORK ITEMS, CCTV & TV ITEMS, LOCK SYSTEM)
    - `stock_transactions`
-   - `department_movements`
-   - `purchase_orders`
-   - `preloved`
+   - `department_movements` (9 departemen hotel)
+   - `purchase_orders` (terhubung ke `master_items.id`)
+   - `preloved` (damaged hardware)
    - `activities`
    - Storage bucket publik `photos`
-   - Data awal demo hotel (hardware, stok, mutasi departemen, PO, preloved).
+   - Data awal hotel (hardware, stok, mutasi 9 departemen, PO, damaged hardware).
 6. Masuk ke menu **Project Settings > API**, lalu salin:
    - **Project URL** (misal: `https://xyzproject.supabase.co`)
    - **Project API Keys: `anon` `public`**
@@ -127,14 +132,13 @@ Untuk menghubungkan aplikasi ke proyek Supabase milik Anda:
 
 - **Metode Login**: Menggunakan Email & Password melalui Supabase Auth Client SDK.
 - **Pusat Manajemen User**: Seluruh pengelolaan pengguna (tambah akun staf IT, edit email, ganti password, reset password, hapus user) dilakukan secara terpusat oleh administrator langsung di dashboard Supabase (**Authentication > Users**).
-- **Penghapusan Fitur Edit Password**: Sesuai instruksi pembaruan, seluruh form edit user dan ubah password di dalam aplikasi telah dihapus demi keamanan dan simplifikasi.
-- **Penghapusan Role Khusus**: Tidak ada lagi hierarki role internal (`ITMANAGER`, `ITASSIST`, `ITTRAINEE`). Semua staf IT terotentikasi memiliki akses operasional penuh ke sistem.
+- **Penghapusan Fitur Edit Password**: Seluruh form edit user dan ubah password di dalam aplikasi telah dihapus demi keamanan dan simplifikasi.
+- **Penghapusan Role Khusus**: Tidak ada lagi hierarki role internal. Semua staf IT terotentikasi memiliki akses operasional penuh ke sistem.
 - **Tombol Logout**: Tersedia di header utama untuk membersihkan session autentikasi dengan aman.
-- **Mode Demo Preview**: Tersedia tombol *Direct Demo Preview* pada halaman login untuk mengakses antarmuka dan seluruh fitur simulasi secara instan tanpa login Supabase.
 
 ---
 
-## 5. Logika Invariant Stok & 7 Departemen Hotel
+## 5. Logika Invariant Stok & 9 Departemen Hotel
 
 Sistem menerapkan validasi matematika invariant yang ketat:
 
@@ -155,9 +159,11 @@ Sistem menerapkan validasi matematika invariant yang ketat:
 Aplikasi menyertakan pustaka **SheetJS (`xlsx.full.min.js`)** via CDN. Proses pembuatan file Excel berlangsung 100% di browser pengguna tanpa memerlukan backend Node.js atau server Express:
 
 - **Inventory Report**: Kode barang, nama, kategori, total masuk, total ditransfer, dikembalikan, stok tersedia, dan status.
-- **Departmental Asset Report**: Daftar inventaris yang dipegang oleh 7 departemen hotel lengkap dengan PIC dan tanggal terakhir.
+- **Departmental Asset Report**: Daftar inventaris yang dipegang oleh 9 departemen hotel lengkap dengan PIC dan tanggal terakhir.
 - **Motion Analytics Audit Trail**: Histori mutasi perpindahan barang (tanggal, barang, departemen, jenis gerakan, jumlah, PIC).
-- **Purchase Orders Report**: Riwayat pengadaan PO, vendor, tanggal order, tanggal tiba, dan status.
+- **Purchase Orders Report**: Riwayat pengadaan PO terhubung dengan master items, vendor, tanggal order, tanggal tiba, dan status.
+- **Damaged Hardware Report**: Inventaris perangkat rusak dan hasil rekondisi IT.
+- **Full Master Backup Workbook**: Satu file multi-sheet komprehensif berisi seluruh lembar kerja.
 - **Preloved Hardware Report**: Rekap hardware rekondisi, serial number, dan kondisi ex-kamar.
 - **Full Master Backup**: Satu file workbook `.xlsx` yang berisi seluruh lembar kerja (*multi-sheet*).
 

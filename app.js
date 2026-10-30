@@ -12,12 +12,14 @@ const DEPARTMENTS = [
   'House Keeping',
   'Engineering',
   'Human Resource',
-  'Food & Beverage',
+  'F&B Product',
+  'F&B Service',
+  'Wellness',
   'Sales & Marketing',
   'Accounting'
 ];
 
-const CATEGORIES = ['PC ITEMS', 'NETWORK ITEMS', 'CCTV & TV ITEMS'];
+const CATEGORIES = ['PC ITEMS', 'NETWORK ITEMS', 'CCTV & TV ITEMS', 'LOCK SYSTEM'];
 
 const STORAGE_KEYS = {
   SUPABASE_URL: 'HOTEL_IT_SUPABASE_URL',
@@ -137,6 +139,18 @@ function getInitialSeedData() {
         created_at: dAgo(20),
         created_by: 'admin@hotel.com',
         updated_at: dAgo(20)
+      },
+      {
+        id: 'item-007',
+        item_code: 'LCK-001',
+        item_name: 'Vingcard Essence RFID Electronic Door Lock',
+        category: 'LOCK SYSTEM',
+        remark: 'Guest Room RFID Smart Door Lock System',
+        photo_url: 'https://images.unsplash.com/photo-1558002038-1055907df827?w=400&auto=format&fit=crop&q=80',
+        is_active: true,
+        created_at: dAgo(4),
+        created_by: 'admin@hotel.com',
+        updated_at: dAgo(4)
       }
     ],
     stockTransactions: [
@@ -145,7 +159,8 @@ function getInitialSeedData() {
       { id: 'tx-003', item_id: 'item-003', transaction_date: dAgo(18), quantity: 6, remark: 'Cadangan Switch Server Room', created_by: 'admin@hotel.com', created_at: dAgo(18) },
       { id: 'tx-004', item_id: 'item-004', transaction_date: dAgo(10), quantity: 20, remark: 'Ekspansi WiFi Lantai 3-5', created_by: 'admin@hotel.com', created_at: dAgo(10) },
       { id: 'tx-005', item_id: 'item-005', transaction_date: dAgo(14), quantity: 25, remark: 'Replacement CCTV Unit', created_by: 'admin@hotel.com', created_at: dAgo(14) },
-      { id: 'tx-006', item_id: 'item-006', transaction_date: dAgo(20), quantity: 12, remark: 'Stok Spare TV Kamar Deluxe', created_by: 'admin@hotel.com', created_at: dAgo(20) }
+      { id: 'tx-006', item_id: 'item-006', transaction_date: dAgo(20), quantity: 12, remark: 'Stok Spare TV Kamar Deluxe', created_by: 'admin@hotel.com', created_at: dAgo(20) },
+      { id: 'tx-007', item_id: 'item-007', transaction_date: dAgo(4), quantity: 18, remark: 'Pengadaan Unit Cadangan Vingcard Lock', created_by: 'admin@hotel.com', created_at: dAgo(4) }
     ],
     departmentMovements: [
       { id: 'mov-001', item_id: 'item-001', department: 'Front Office', type: 'TRANSFER_TO_DEPARTMENT', quantity: 4, date: dAgo(8), recipient_name: 'Budi Santoso (FOM)', remark: 'Unit PC untuk Receptionist Counter 1-4', created_by: 'admin@hotel.com', created_at: dAgo(8) },
@@ -153,17 +168,22 @@ function getInitialSeedData() {
       { id: 'mov-003', item_id: 'item-002', department: 'Sales & Marketing', type: 'TRANSFER_TO_DEPARTMENT', quantity: 2, date: dAgo(5), recipient_name: 'Rian Pratama (DOSM)', remark: 'Laptop untuk Sales Executive Client Visit', created_by: 'admin@hotel.com', created_at: dAgo(5) },
       { id: 'mov-004', item_id: 'item-004', department: 'Engineering', type: 'TRANSFER_TO_DEPARTMENT', quantity: 5, date: dAgo(4), recipient_name: 'Agus Setiawan (Chief Eng)', remark: 'Pemasangan AP Area Pre-function', created_by: 'admin@hotel.com', created_at: dAgo(4) },
       { id: 'mov-005', item_id: 'item-005', department: 'House Keeping', type: 'TRANSFER_TO_DEPARTMENT', quantity: 2, date: dAgo(3), recipient_name: 'Lina Marlina (HK Mgr)', remark: 'CCTV Koridor Linen Room', created_by: 'admin@hotel.com', created_at: dAgo(3) },
-      { id: 'mov-006', item_id: 'item-001', department: 'Front Office', type: 'RETURN_TO_INVENTORY', quantity: 1, date: dAgo(1), recipient_name: 'Budi Santoso (FOM)', remark: 'Kembali ke IT untuk maintenance berkala', created_by: 'admin@hotel.com', created_at: dAgo(1) }
+      { id: 'mov-006', item_id: 'item-001', department: 'Front Office', type: 'RETURN_TO_INVENTORY', quantity: 1, date: dAgo(1), recipient_name: 'Budi Santoso (FOM)', remark: 'Kembali ke IT untuk maintenance berkala', created_by: 'admin@hotel.com', created_at: dAgo(1) },
+      { id: 'mov-007', item_id: 'item-007', department: 'Engineering', type: 'TRANSFER_TO_DEPARTMENT', quantity: 4, date: dAgo(2), recipient_name: 'Hendra (Lock Eng)', remark: 'Pemasangan Lock Kamar 201-204', created_by: 'admin@hotel.com', created_at: dAgo(2) },
+      { id: 'mov-008', item_id: 'item-002', department: 'F&B Service', type: 'TRANSFER_TO_DEPARTMENT', quantity: 1, date: dAgo(3), recipient_name: 'Captain Resto (FBS)', remark: 'Laptop Kasir POS Resto', created_by: 'admin@hotel.com', created_at: dAgo(3) },
+      { id: 'mov-009', item_id: 'item-001', department: 'F&B Product', type: 'TRANSFER_TO_DEPARTMENT', quantity: 1, date: dAgo(3), recipient_name: 'Chef Executive (FBP)', remark: 'PC Kitchen Display System', created_by: 'admin@hotel.com', created_at: dAgo(3) },
+      { id: 'mov-010', item_id: 'item-004', department: 'Wellness', type: 'TRANSFER_TO_DEPARTMENT', quantity: 1, date: dAgo(2), recipient_name: 'Spa & Fitness Supervisor', remark: 'AP Ruang Gym & Spa', created_by: 'admin@hotel.com', created_at: dAgo(2) }
     ],
     purchaseOrders: [
-      { id: 'po-001', po_number: 'PO-2026-10-001', item_name: 'Logitech MK270 Wireless Keyboard & Mouse Combo', category: 'PC ITEMS', photo_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400&auto=format&fit=crop&q=80', date_order: dAgo(14), date_arrival: dAgo(2), quantity: 20, for_use: 'Stock Keyboard Replacement All Depts', remarks: 'Vendor Surya Komputer Jakarta', vendor: 'Surya Komputer', status: 'SUDAH DATANG', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(14) },
-      { id: 'po-002', po_number: 'PO-2026-10-002', item_name: 'Cat6 UTP Cable Belden 305m Roll', category: 'NETWORK ITEMS', photo_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&auto=format&fit=crop&q=80', date_order: dAgo(5), date_arrival: null, quantity: 3, for_use: 'Peremajaan Kabel LAN Gedung Annex', remarks: 'Menunggu pengiriman dari distributor', vendor: 'Kabelindo Jaya Mandiri', status: 'BELUM DATANG', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(5) },
-      { id: 'po-003', po_number: 'PO-2026-10-003', item_name: 'Hikvision 16-Channel NVR 4K DS-7616NI-Q2', category: 'CCTV & TV ITEMS', photo_url: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=400&auto=format&fit=crop&q=80', date_order: dAgo(3), date_arrival: null, quantity: 1, for_use: 'Upgrade Server CCTV Ruang Security', remarks: 'Estimasi tiba akhir bulan', vendor: 'Security CCTV Specialist', status: 'BELUM DATANG', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(3) }
+      { id: 'po-001', po_number: 'PO-2026-10-001', item_id: 'item-001', item_name: 'Dell OptiPlex 7090 Desktop Intel Core i7', category: 'PC ITEMS', photo_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400&auto=format&fit=crop&q=80', date_order: dAgo(14), date_arrival: dAgo(2), quantity: 20, for_use: 'Stock Workstation Replacement All Depts', remarks: 'Vendor Surya Komputer Jakarta', vendor: 'Surya Komputer', status: 'SUDAH DATANG', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(14) },
+      { id: 'po-002', po_number: 'PO-2026-10-002', item_id: 'item-003', item_name: 'Cisco Catalyst 2960-X 48-Port PoE Switch', category: 'NETWORK ITEMS', photo_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&auto=format&fit=crop&q=80', date_order: dAgo(5), date_arrival: null, quantity: 3, for_use: 'Peremajaan Switch Gedung Annex', remarks: 'Menunggu pengiriman dari distributor', vendor: 'Kabelindo Jaya', status: 'BELUM DATANG', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(5) },
+      { id: 'po-003', po_number: 'PO-2026-10-003', item_id: 'item-005', item_name: 'Hikvision 4MP IP Dome Camera DS-2CD2143G2-I', category: 'CCTV & TV ITEMS', photo_url: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=400&auto=format&fit=crop&q=80', date_order: dAgo(3), date_arrival: null, quantity: 1, for_use: 'Upgrade Server CCTV Ruang Security', remarks: 'Estimasi tiba akhir bulan', vendor: 'Security CCTV Specialist', status: 'BELUM DATANG', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(3) }
     ],
     preloved: [
       { id: 'pre-001', item_code: 'PRE-PC-01', item_name: 'HP ProDesk 400 G4 Desktop (Refurbished)', category: 'PC ITEMS', date_repaired: dAgo(12), quantity: 2, serial_number: 'SN-HP-99201A', remark: 'Ex Front Office counter. RAM upgraded to 16GB, SSD 256GB baru', photo_url: 'https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=400&auto=format&fit=crop&q=80', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(12) },
       { id: 'pre-002', item_code: 'PRE-NET-01', item_name: 'MikroTik Cloud Router RB1100AHx4', category: 'NETWORK ITEMS', date_repaired: dAgo(8), quantity: 1, serial_number: 'SN-MT-48218C', remark: 'Ex Core Backup. Sudah di-reset default RouterOS v7.14', photo_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&auto=format&fit=crop&q=80', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(8) },
-      { id: 'pre-003', item_code: 'PRE-CCTV-01', item_name: 'LG 43" Commercial TV 43UN7100 (Ex Guest Room)', category: 'CCTV & TV ITEMS', date_repaired: dAgo(4), quantity: 3, serial_number: 'SN-LG-88319X', remark: 'Ex Kamar 401-403, kondisi layar mulus 95%, lengkap remote & bracket', photo_url: 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=400&auto=format&fit=crop&q=80', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(4) }
+      { id: 'pre-003', item_code: 'PRE-CCTV-01', item_name: 'LG 43" Commercial TV 43UN7100 (Ex Guest Room)', category: 'CCTV & TV ITEMS', date_repaired: dAgo(4), quantity: 3, serial_number: 'SN-LG-88319X', remark: 'Ex Kamar 401-403, kondisi layar mulus 95%, lengkap remote & bracket', photo_url: 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=400&auto=format&fit=crop&q=80', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(4) },
+      { id: 'pre-004', item_code: 'PRE-LCK-01', item_name: 'Vingcard Classic Magnetic Lock Reader Module', category: 'LOCK SYSTEM', date_repaired: dAgo(2), quantity: 4, serial_number: 'SN-VC-33019M', remark: 'Ex Kamar Lantai 1, motherboard lock disolder ulang & kalibrasi reader OK', photo_url: 'https://images.unsplash.com/photo-1558002038-1055907df827?w=400&auto=format&fit=crop&q=80', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(2) }
     ],
     activities: [
       { id: 'act-001', item_name: 'Dell OptiPlex 7090 Desktop', category: 'PC ITEMS', action: 'Added', username: 'admin@hotel.com', timestamp: dAgo(15), type: 'INVENTORY' },
@@ -536,6 +556,7 @@ function renderDashboard() {
     const pcCount = state.masterItems.filter(i => i.category === 'PC ITEMS').length;
     const netCount = state.masterItems.filter(i => i.category === 'NETWORK ITEMS').length;
     const cctvCount = state.masterItems.filter(i => i.category === 'CCTV & TV ITEMS').length;
+    const lockCount = state.masterItems.filter(i => i.category === 'LOCK SYSTEM').length;
     const total = state.masterItems.length || 1;
 
     catContainer.innerHTML = `
@@ -564,6 +585,15 @@ function renderDashboard() {
         </div>
         <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
           <div class="h-full bg-amber-400 rounded-full" style="width: ${(cctvCount / total) * 100}%"></div>
+        </div>
+      </div>
+      <div>
+        <div class="flex justify-between text-xs mb-1">
+          <span class="text-slate-300 font-medium">LOCK SYSTEM</span>
+          <span class="text-slate-400 font-mono font-bold">${lockCount} (${Math.round((lockCount / total) * 100)}%)</span>
+        </div>
+        <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
+          <div class="h-full bg-emerald-400 rounded-full" style="width: ${(lockCount / total) * 100}%"></div>
         </div>
       </div>
     `;
@@ -664,10 +694,17 @@ function renderInventoryTable() {
     return `
       <tr class="hover:bg-slate-900/50 transition">
         <td class="py-3 px-4">
-          <div class="flex items-center gap-3">
+          <div
+            class="flex items-center gap-3 cursor-pointer group/item"
+            onclick="openItemInboundHistoryModal('${item.id}')"
+            title="Klik untuk melihat histori stok masuk item ini"
+          >
             ${photoImg}
             <div>
-              <div class="font-bold text-white">${escapeHtml(item.item_name)}</div>
+              <div class="font-bold text-white group-hover/item:text-cyan-400 transition flex items-center gap-1.5">
+                <span>${escapeHtml(item.item_name)}</span>
+                <i class="fa-solid fa-clock-rotate-left text-[11px] text-cyan-400 opacity-60 group-hover/item:opacity-100 transition"></i>
+              </div>
               <div class="text-[11px] text-slate-400 font-mono">${escapeHtml(item.item_code || 'SKU-GEN')}</div>
             </div>
           </div>
@@ -686,6 +723,14 @@ function renderInventoryTable() {
           <div class="flex items-center justify-end gap-1.5">
             <button
               type="button"
+              onclick="openItemInboundHistoryModal('${item.id}')"
+              title="Lihat Histori Stok Masuk"
+              class="p-1.5 rounded-lg bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white transition text-xs border border-cyan-500/30"
+            >
+              <i class="fa-solid fa-clock-rotate-left"></i>
+            </button>
+            <button
+              type="button"
               onclick="openModalTransfer('${item.id}')"
               title="Transfer to Department"
               class="p-1.5 rounded-lg bg-brand-600/20 hover:bg-brand-600 text-brand-300 hover:text-white transition text-xs"
@@ -696,7 +741,7 @@ function renderInventoryTable() {
               type="button"
               onclick="openModalInbound('${item.id}')"
               title="Add Inbound Stock"
-              class="p-1.5 rounded-lg bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white transition text-xs"
+              class="p-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white transition text-xs"
             >
               <i class="fa-solid fa-plus"></i>
             </button>
@@ -766,7 +811,7 @@ async function handleCreateMasterItemSubmit(e) {
     return;
   }
 
-  const prefix = category === 'PC ITEMS' ? 'PC' : category === 'NETWORK ITEMS' ? 'NET' : 'CCTV';
+  const prefix = category === 'PC ITEMS' ? 'PC' : category === 'NETWORK ITEMS' ? 'NET' : category === 'LOCK SYSTEM' ? 'LCK' : 'CCTV';
   const randomCode = `${prefix}-${Math.floor(100 + Math.random() * 900)}`;
 
   const newItem = {
@@ -961,6 +1006,72 @@ function openModal(modalId) {
 
 function closeModal(modalId) {
   document.getElementById(modalId)?.classList.add('hidden');
+}
+
+// Item Inbound Stock History Modal Logic
+let currentHistoryItemId = null;
+
+function openItemInboundHistoryModal(itemId) {
+  const item = state.masterItems.find(i => i.id === itemId);
+  if (!item) return;
+
+  currentHistoryItemId = itemId;
+
+  // Set modal header details
+  const nameEl = document.getElementById('modal-hist-item-name');
+  const catBadge = document.getElementById('modal-hist-category-badge');
+  const codeBadge = document.getElementById('modal-hist-code-badge');
+  const subtitle = document.getElementById('modal-hist-subtitle');
+
+  if (nameEl) nameEl.textContent = item.item_name;
+  if (catBadge) catBadge.textContent = item.category;
+  if (codeBadge) codeBadge.textContent = item.item_code || 'SKU-GEN';
+  if (subtitle) subtitle.textContent = `Katalog IT: ${item.item_code || '-'} | Kategori: ${item.category}`;
+
+  // Filter inbound transactions for this item
+  const txs = state.stockTransactions
+    .filter(t => t.item_id === itemId)
+    .sort((a, b) => new Date(b.transaction_date || 0) - new Date(a.transaction_date || 0));
+
+  const totalIn = txs.reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
+  const metrics = calculateStockMetrics(itemId);
+
+  const totalInEl = document.getElementById('modal-hist-total-in');
+  const countEl = document.getElementById('modal-hist-tx-count');
+  const activeStockEl = document.getElementById('modal-hist-active-stock');
+
+  if (totalInEl) totalInEl.textContent = `${totalIn} unit`;
+  if (countEl) countEl.textContent = `${txs.length} kali`;
+  if (activeStockEl) activeStockEl.textContent = `${metrics.availableStock} unit`;
+
+  const tbody = document.getElementById('modal-hist-tbody');
+  const empty = document.getElementById('modal-hist-empty');
+
+  if (tbody) {
+    if (txs.length === 0) {
+      tbody.innerHTML = '';
+      empty?.classList.remove('hidden');
+    } else {
+      empty?.classList.add('hidden');
+      tbody.innerHTML = txs.map((tx, idx) => `
+        <tr class="hover:bg-slate-900/60 transition">
+          <td class="py-2.5 px-3 text-center font-mono text-slate-500">${idx + 1}</td>
+          <td class="py-2.5 px-3 font-mono text-slate-300 whitespace-nowrap">${tx.transaction_date || '-'}</td>
+          <td class="py-2.5 px-3 text-center font-mono font-bold text-cyan-400 whitespace-nowrap">+${tx.quantity}</td>
+          <td class="py-2.5 px-4 text-slate-300">${escapeHtml(tx.remark || '-')}</td>
+          <td class="py-2.5 px-3 font-mono text-[11px] text-slate-400 whitespace-nowrap">${escapeHtml(tx.created_by || 'IT Staff')}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  openModal('modal-item-inbound-history');
+}
+
+function openInboundForCurrentItem() {
+  if (!currentHistoryItemId) return;
+  closeModal('modal-item-inbound-history');
+  openModalInbound(currentHistoryItemId);
 }
 
 // Inbound Modal
@@ -1203,7 +1314,61 @@ async function handleReturnSubmit(e) {
   showToast(`Berhasil mengembalikan ${qty} unit ${item.item_name} ke stok IT!`, 'success');
 }
 
-// PO Modal
+// PO Modal & Master Item Integration
+function populatePOMasterItemDropdown(selectedItemId = null, keyword = '') {
+  const select = document.getElementById('po-master-item-id');
+  if (!select) return;
+
+  const kw = (keyword || '').toLowerCase().trim();
+  const filtered = state.masterItems.filter(item => {
+    if (!kw) return true;
+    return (
+      item.item_name.toLowerCase().includes(kw) ||
+      (item.item_code && item.item_code.toLowerCase().includes(kw)) ||
+      (item.category && item.category.toLowerCase().includes(kw))
+    );
+  });
+
+  if (filtered.length === 0) {
+    select.innerHTML = '<option value="" disabled selected>(Tidak ada master item yang cocok)</option>';
+  } else {
+    select.innerHTML = filtered.map(item => `
+      <option value="${item.id}" ${item.id === selectedItemId ? 'selected' : ''} data-name="${escapeHtml(item.item_name)}" data-cat="${item.category}" data-code="${item.item_code || ''}">
+        ${escapeHtml(item.item_name)} (${item.category}) [${item.item_code || 'SKU'}]
+      </option>
+    `).join('');
+  }
+
+  handlePOMasterItemSelect();
+}
+
+function filterPOMasterItemDropdown(keyword) {
+  const select = document.getElementById('po-master-item-id');
+  const currentVal = select ? select.value : null;
+  populatePOMasterItemDropdown(currentVal, keyword);
+}
+
+function handlePOMasterItemSelect() {
+  const select = document.getElementById('po-master-item-id');
+  const nameInput = document.getElementById('po-item-name');
+  const catInput = document.getElementById('po-category');
+  const infoCategory = document.getElementById('po-info-category');
+  const infoCode = document.getElementById('po-info-code');
+
+  if (!select || select.selectedIndex === -1) return;
+
+  const opt = select.options[select.selectedIndex];
+  if (!opt || !opt.value) return;
+
+  const item = state.masterItems.find(i => i.id === opt.value);
+  if (!item) return;
+
+  if (nameInput) nameInput.value = item.item_name;
+  if (catInput) catInput.value = item.category;
+  if (infoCategory) infoCategory.textContent = item.category;
+  if (infoCode) infoCode.textContent = item.item_code || '-';
+}
+
 function openModalPO(editId = null) {
   const form = document.getElementById('form-po');
   form.reset();
@@ -1211,30 +1376,44 @@ function openModalPO(editId = null) {
   document.getElementById('po-modal-title').textContent = 'New Purchase Order';
   document.getElementById('po-date-order').value = new Date().toISOString().split('T')[0];
 
+  const searchInput = document.getElementById('po-item-search');
+  if (searchInput) searchInput.value = '';
+
+  let targetItemId = null;
+
   if (editId) {
     const po = state.purchaseOrders.find(p => p.id === editId);
     if (po) {
       document.getElementById('po-edit-id').value = po.id;
       document.getElementById('po-modal-title').textContent = 'Edit Purchase Order';
-      document.getElementById('po-item-name').value = po.item_name;
-      document.getElementById('po-category').value = po.category;
       document.getElementById('po-qty').value = po.quantity;
       document.getElementById('po-date-order').value = po.date_order;
       document.getElementById('po-status').value = po.status;
       document.getElementById('po-for-use').value = po.for_use;
       document.getElementById('po-vendor').value = po.vendor || '';
       document.getElementById('po-remarks').value = po.remarks || '';
+
+      if (po.item_id) {
+        targetItemId = po.item_id;
+      } else {
+        const found = state.masterItems.find(i => i.item_name.toLowerCase() === po.item_name.toLowerCase());
+        if (found) targetItemId = found.id;
+      }
     }
   }
 
+  if (!targetItemId && state.masterItems.length > 0) {
+    targetItemId = state.masterItems[0].id;
+  }
+
+  populatePOMasterItemDropdown(targetItemId, '');
   openModal('modal-po');
 }
 
 async function handlePOSubmit(e) {
   e.preventDefault();
   const editId = document.getElementById('po-edit-id').value;
-  const itemName = document.getElementById('po-item-name').value.trim();
-  const category = document.getElementById('po-category').value;
+  const itemId = document.getElementById('po-master-item-id').value;
   const qty = parseInt(document.getElementById('po-qty').value, 10);
   const dateOrder = document.getElementById('po-date-order').value;
   const status = document.getElementById('po-status').value;
@@ -1242,9 +1421,19 @@ async function handlePOSubmit(e) {
   const vendor = document.getElementById('po-vendor').value.trim();
   const remarks = document.getElementById('po-remarks').value.trim();
 
+  const item = state.masterItems.find(i => i.id === itemId);
+  if (!item) {
+    showToast('Pilih barang dari Master Item terlebih dahulu!', 'error');
+    return;
+  }
+
+  const itemName = item.item_name;
+  const category = item.category;
+
   if (editId) {
     const existing = state.purchaseOrders.find(p => p.id === editId);
     if (existing) {
+      existing.item_id = item.id;
       existing.item_name = itemName;
       existing.category = category;
       existing.quantity = qty;
@@ -1268,9 +1457,10 @@ async function handlePOSubmit(e) {
     const newPO = {
       id: `po-${Date.now()}`,
       po_number: `PO-${new Date().getFullYear()}-${Math.floor(100 + Math.random() * 900)}`,
+      item_id: item.id,
       item_name: itemName,
       category: category,
-      photo_url: null,
+      photo_url: item.photo_url || null,
       date_order: dateOrder,
       date_arrival: status === 'SUDAH DATANG' ? dateOrder : null,
       quantity: qty,
@@ -1295,19 +1485,19 @@ async function handlePOSubmit(e) {
   closeModal('modal-po');
 }
 
-// Preloved Modal
+// Damaged Hardware Modal
 function openModalPreloved(editId = null) {
   const form = document.getElementById('form-preloved');
   form.reset();
   document.getElementById('preloved-edit-id').value = '';
-  document.getElementById('preloved-modal-title').textContent = 'Add Preloved Hardware';
+  document.getElementById('preloved-modal-title').textContent = 'Add Damaged Hardware';
   document.getElementById('preloved-date').value = new Date().toISOString().split('T')[0];
 
   if (editId) {
     const pre = state.preloved.find(p => p.id === editId);
     if (pre) {
       document.getElementById('preloved-edit-id').value = pre.id;
-      document.getElementById('preloved-modal-title').textContent = 'Edit Preloved Hardware';
+      document.getElementById('preloved-modal-title').textContent = 'Edit Damaged Hardware';
       document.getElementById('preloved-item-name').value = pre.item_name;
       document.getElementById('preloved-category').value = pre.category;
       document.getElementById('preloved-qty').value = pre.quantity;
@@ -1344,7 +1534,7 @@ async function handlePrelovedSubmit(e) {
       if (isLiveSupabase && supabaseClient) {
         await supabaseClient.from('preloved').update(existing).eq('id', editId);
       }
-      showToast('Preloved item berhasil diperbarui!', 'success');
+      showToast('Damaged hardware berhasil diperbarui!', 'success');
     }
   } else {
     const newPre = {
@@ -1366,8 +1556,8 @@ async function handlePrelovedSubmit(e) {
       await supabaseClient.from('preloved').insert(newPre);
     }
     state.preloved.unshift(newPre);
-    logActivity(`Preloved: ${itemName} (${qty} units)`, category, 'Added', 'PRELOVED');
-    showToast('Barang Preloved berhasil ditambahkan!', 'success');
+    logActivity(`Damaged HW: ${itemName} (${qty} units)`, category, 'Added', 'DAMAGED_HARDWARE');
+    showToast('Damaged hardware berhasil ditambahkan!', 'success');
   }
 
   persistState();
@@ -1644,7 +1834,7 @@ function renderPrelovedTable() {
 }
 
 async function confirmDeletePreloved(preId, itemName) {
-  if (!confirm(`Hapus Preloved hardware "${itemName}"?`)) return;
+  if (!confirm(`Hapus Damaged Hardware "${itemName}"?`)) return;
 
   if (isLiveSupabase && supabaseClient) {
     await supabaseClient.from('preloved').delete().eq('id', preId);
@@ -1652,7 +1842,7 @@ async function confirmDeletePreloved(preId, itemName) {
 
   state.preloved = state.preloved.filter(p => p.id !== preId);
   persistState();
-  showToast('Barang Preloved berhasil dihapus.', 'info');
+  showToast('Damaged hardware berhasil dihapus.', 'info');
 }
 
 // ==============================================================================
@@ -1890,7 +2080,7 @@ function exportDepartmentalExcel() {
   if (!XLSX) return;
 
   const data = [
-    ['HOTEL IT INVENTORY - 7 DEPARTMENTS ASSET HOLDINGS REPORT'],
+    ['HOTEL IT INVENTORY - 9 DEPARTMENTS ASSET HOLDINGS REPORT'],
     [`Generated: ${new Date().toLocaleString()}`],
     [],
     ['No', 'Department', 'Item Name', 'Category', 'Held Units', 'Total Received', 'Total Returned', 'Last Recipient / PIC', 'Last Movement Date']
@@ -2022,7 +2212,7 @@ function exportPrelovedExcel() {
   if (!XLSX) return;
 
   const data = [
-    ['HOTEL IT INVENTORY - PRELOVED & REFURBISHED HARDWARE'],
+    ['HOTEL IT INVENTORY - DAMAGED HARDWARE & REFURBISHED ITEMS'],
     [`Generated: ${new Date().toLocaleString()}`],
     [],
     ['No', 'Item Code', 'Item Name', 'Category', 'Date Repaired', 'Qty', 'Serial Number', 'Remark / Ex-Location']
@@ -2048,9 +2238,9 @@ function exportPrelovedExcel() {
   ];
 
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Preloved Items');
+  XLSX.utils.book_append_sheet(wb, ws, 'Damaged Hardware');
 
-  const filename = `Hotel_IT_Preloved_${new Date().toISOString().split('T')[0]}.xlsx`;
+  const filename = `Hotel_IT_Damaged_Hardware_${new Date().toISOString().split('T')[0]}.xlsx`;
   XLSX.writeFile(wb, filename);
   showToast(`File "${filename}" berhasil didownload!`, 'success');
 }
@@ -2112,7 +2302,7 @@ function exportFullBackupExcel() {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(invData), 'Master Inventory');
 
   const deptData = [
-    ['HOTEL IT 7 DEPARTMENTS ASSET HOLDINGS'],
+    ['HOTEL IT 9 DEPARTMENTS ASSET HOLDINGS'],
     [],
     ['No', 'Department', 'Hardware Item', 'Category', 'Current Held Units', 'Total Received', 'Total Returned']
   ];
@@ -2150,14 +2340,14 @@ function exportFullBackupExcel() {
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(poData), 'Purchase Orders');
 
   const preData = [
-    ['HOTEL IT PRELOVED & REFURBISHED ITEMS'],
+    ['HOTEL IT DAMAGED HARDWARE & REFURBISHED ITEMS'],
     [],
     ['No', 'Code', 'Item Name', 'Category', 'Date Repaired', 'Qty', 'Serial Number', 'Remark']
   ];
   state.preloved.forEach((pre, index) => {
     preData.push([index + 1, pre.item_code || '-', pre.item_name, pre.category, pre.date_repaired, pre.quantity, pre.serial_number || '-', pre.remark || '-']);
   });
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(preData), 'Preloved Items');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(preData), 'Damaged Hardware');
 
   const filename = `Hotel_IT_Master_Full_Backup_${new Date().toISOString().split('T')[0]}.xlsx`;
   XLSX.writeFile(wb, filename);
@@ -2458,6 +2648,11 @@ window.renderMonthlyView = renderMonthlyView;
 window.openModal = openModal;
 window.closeModal = closeModal;
 window.openModalInbound = openModalInbound;
+window.openItemInboundHistoryModal = openItemInboundHistoryModal;
+window.openInboundForCurrentItem = openInboundForCurrentItem;
+window.populatePOMasterItemDropdown = populatePOMasterItemDropdown;
+window.filterPOMasterItemDropdown = filterPOMasterItemDropdown;
+window.handlePOMasterItemSelect = handlePOMasterItemSelect;
 window.openModalTransfer = openModalTransfer;
 window.openModalReturn = openModalReturn;
 window.openModalPO = openModalPO;
@@ -2489,7 +2684,6 @@ window.saveSettingsCredentials = saveSettingsCredentials;
 window.saveLoginConfigDrawer = saveLoginConfigDrawer;
 window.testSupabaseConnection = testSupabaseConnection;
 window.resetToDefaultCredentials = resetToDefaultCredentials;
-window.reloadDemoDataSeed = reloadDemoDataSeed;
 window.copySchemaSQL = copySchemaSQL;
 
 window.toggleMobileSidebar = toggleMobileSidebar;
@@ -2505,7 +2699,6 @@ document.addEventListener('DOMContentLoaded', () => {
   initMonthlyView();
 
   document.getElementById('form-login')?.addEventListener('submit', handleLoginSubmit);
-  document.getElementById('btn-quick-demo')?.addEventListener('click', handleDirectDemoBypass);
   document.getElementById('btn-logout')?.addEventListener('click', handleLogout);
 
   document.getElementById('form-create-master-item')?.addEventListener('submit', handleCreateMasterItemSubmit);
