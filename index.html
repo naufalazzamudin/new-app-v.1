@@ -414,7 +414,7 @@
             class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition"
           >
             <i class="fa-solid fa-recycle w-5 text-center text-teal-400"></i>
-            <span>Preloved Items</span>
+            <span>Damaged Device</span>
           </button>
 
           <div class="pt-2 border-t border-slate-800/80 my-2"></div>
@@ -1134,7 +1134,7 @@
         <section id="view-preloved" class="app-view hidden space-y-6">
           <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h2 class="text-2xl font-extrabold text-white">Preloved & Refurbished Hardware</h2>
+              <h2 class="text-2xl font-extrabold text-white">Damaged & Refurbished Hardware</h2>
               <p class="text-xs text-slate-400 mt-1">
                 Koleksi barang bekas layak pakai, spare parts rekondisi, dan ex-kamar hotel
               </p>
@@ -1145,7 +1145,7 @@
               class="px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs shadow-md shadow-teal-500/20 transition flex items-center gap-2"
             >
               <i class="fa-solid fa-plus"></i>
-              <span>+ Add Preloved Item</span>
+              <span>+ Add Damaged Item</span>
             </button>
           </div>
 
@@ -1156,7 +1156,7 @@
               <input
                 type="text"
                 id="preloved-search"
-                placeholder="Search preloved name, serial number, remark..."
+                placeholder="Search damaged name, serial number, remark..."
                 oninput="renderPrelovedTable()"
                 class="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 outline-none focus:border-brand-500"
               >
@@ -1193,7 +1193,7 @@
             </div>
             <div id="preloved-empty-state" class="hidden p-8 text-center text-slate-500">
               <i class="fa-solid fa-recycle text-3xl mb-2 text-slate-600"></i>
-              <p>Belum ada data preloved / barang rekondisi.</p>
+              <p>Belum ada data Damaged / barang rekondisi.</p>
             </div>
           </div>
         </section>
@@ -1242,7 +1242,7 @@
               <i class="fa-solid fa-file-invoice mr-1.5"></i>Purchase Orders
             </button>
             <button type="button" onclick="setMonthlyTab('preloved')" class="monthly-subtab px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white" data-tab="preloved">
-              <i class="fa-solid fa-recycle mr-1.5"></i>Preloved
+              <i class="fa-solid fa-recycle mr-1.5"></i>Damaged
             </button>
           </div>
 
@@ -1367,7 +1367,7 @@
                 class="mt-6 w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-semibold text-xs shadow-md transition flex items-center justify-center gap-2"
               >
                 <i class="fa-solid fa-download"></i>
-                <span>Download Preloved.xlsx</span>
+                <span>Download Damaged.xlsx</span>
               </button>
             </div>
 
@@ -1779,7 +1779,7 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
       <div class="flex items-center justify-between pb-3 border-b border-slate-800">
         <h3 class="text-base font-bold text-white flex items-center gap-2">
           <i class="fa-solid fa-recycle text-teal-400"></i>
-          <span id="preloved-modal-title">Add Preloved Hardware</span>
+          <span id="preloved-modal-title">Add Damaged Hardware</span>
         </h3>
         <button type="button" onclick="closeModal('modal-preloved')" class="text-slate-400 hover:text-white">
           <i class="fa-solid fa-xmark text-lg"></i>
@@ -1827,7 +1827,7 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
 
         <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
           <button type="button" onclick="closeModal('modal-preloved')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700">Batal</button>
-          <button type="submit" class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold shadow-md">Simpan Preloved</button>
+          <button type="submit" class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold shadow-md">Simpan Damaged</button>
         </div>
       </form>
     </div>
