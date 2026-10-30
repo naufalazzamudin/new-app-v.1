@@ -3,11 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hotel IT Inventory Management</title>
-  <meta name="description" content="Modern full-stack IT department inventory management system for hotel hardware, refurbished equipment, and spare parts tracking.">
-  <meta property="og:title" content="Hotel IT Inventory Management">
-  <meta property="og:description" content="Modern full-stack IT department inventory management system for hotel hardware, refurbished equipment, and spare parts tracking.">
+  <title>Rattan-Inn Hotel IT Inventory</title>
+  <meta name="description" content="Rattan-Inn Hotel IT department inventory management system for hotel hardware, refurbished equipment, and spare parts tracking.">
+  <meta property="og:title" content="Rattan-Inn Hotel IT Inventory">
+  <meta property="og:description" content="Rattan-Inn Hotel IT department inventory management system for hotel hardware, refurbished equipment, and spare parts tracking.">
   <meta property="og:type" content="website">
+  <link rel="icon" type="image/png" href="/public/assets/rattan_inn_logo.png">
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -85,6 +86,17 @@
       -webkit-backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.08);
     }
+    /* Anti-breaking Table Badges & Cell Rules */
+    .badge-pill {
+      white-space: nowrap !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      flex-shrink: 0 !important;
+      word-break: keep-all !important;
+    }
+    table th, table td {
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-brand-500 selection:text-white">
@@ -101,10 +113,10 @@
 
         <!-- Header -->
         <div class="text-center mb-8 relative">
-          <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-400 shadow-lg shadow-brand-500/25 mb-4 text-white text-2xl">
-            <i class="fa-solid fa-hotel"></i>
+          <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-slate-900 border border-slate-700/80 shadow-lg shadow-pink-500/10 mb-4 p-2 relative overflow-hidden group">
+            <img src="/public/assets/rattan_inn_logo.png" alt="Rattan-Inn Hotel" class="w-full h-full object-contain filter drop-shadow">
           </div>
-          <h1 class="text-2xl font-bold tracking-tight text-white">Hotel IT Inventory</h1>
+          <h1 class="text-2xl font-bold tracking-tight text-white">Rattan-Inn Hotel IT Inventory</h1>
           <p class="text-sm text-slate-400 mt-1">Management System & Hardware Control</p>
           <div class="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-800 text-xs font-medium text-slate-300 border border-slate-700">
             <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -241,12 +253,12 @@
             <i class="fa-solid fa-bars"></i>
           </button>
           <div class="flex items-center gap-2 sm:gap-3 cursor-pointer min-w-0" onclick="navigateTo('dashboard')">
-            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-indigo-400 flex items-center justify-center text-white text-sm sm:text-lg shadow-md shadow-brand-500/20 flex-shrink-0">
-              <i class="fa-solid fa-hotel"></i>
+            <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-900 border border-slate-700/80 flex items-center justify-center p-1.5 shadow-md shadow-pink-500/10 flex-shrink-0">
+              <img src="/public/assets/rattan_inn_logo.png" alt="Rattan-Inn Logo" class="w-full h-full object-contain">
             </div>
             <div class="min-w-0">
-              <div class="font-bold text-white tracking-tight leading-tight text-xs sm:text-base truncate">Hotel IT System</div>
-              <div class="text-[9px] sm:text-[11px] text-slate-400 hidden xs:block truncate">Inventory & Hardware Center</div>
+              <div class="font-bold text-white tracking-tight leading-tight text-xs sm:text-base truncate">Rattan-Inn Hotel IT Inventory</div>
+              <div class="text-[9px] sm:text-[11px] text-slate-400 hidden xs:block truncate">IT Infrastructure & Hardware Control</div>
             </div>
           </div>
         </div>
@@ -315,10 +327,10 @@
           <!-- Drawer Header with Close Button -->
           <div class="flex items-center justify-between pb-3 mb-2 border-b border-slate-800">
             <div class="flex items-center gap-2">
-              <div class="w-7 h-7 rounded-lg bg-brand-600 text-white flex items-center justify-center text-xs shadow-md">
-                <i class="fa-solid fa-hotel"></i>
+              <div class="w-8 h-8 rounded-lg bg-slate-950 border border-slate-700/80 flex items-center justify-center p-1 shadow-sm flex-shrink-0">
+                <img src="/public/assets/rattan_inn_logo.png" alt="Rattan-Inn" class="w-full h-full object-contain">
               </div>
-              <span class="text-xs font-bold text-white">Hotel IT Menu</span>
+              <span class="text-xs font-bold text-white">Rattan-Inn IT Menu</span>
             </div>
             <button type="button" onclick="toggleMobileSidebar(false)" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition">
               <i class="fa-solid fa-xmark text-sm"></i>
@@ -451,51 +463,70 @@
         <!-- =================================================================== -->
         <section id="view-dashboard" class="app-view space-y-6">
           <!-- Hero Action Banner -->
-          <div class="glass-panel rounded-3xl p-6 md:p-8 border border-slate-800 relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900">
-            <div class="max-w-2xl">
-              <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20 text-xs font-semibold mb-3">
-                <i class="fa-solid fa-shield-halved"></i>
-                Hotel IT Operational Hub
-              </span>
-              <h2 id="hero-greeting-title" class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-snug">
-                Welcome Admin! What are we diving into today?😉
-              </h2>
-              <p class="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed">
-                Single-source-of-truth for hotel IT infrastructure. Direct sync with Supabase BaaS and client-side SheetJS exports.
-              </p>
-              <div class="mt-5 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
-                <button
-                  type="button"
-                  onclick="openModalTransfer()"
-                  class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold text-[11px] sm:text-xs shadow-lg shadow-brand-500/25 transition flex items-center justify-center gap-1.5 sm:gap-2 text-center"
-                >
-                  <i class="fa-solid fa-share-from-square text-xs"></i>
-                  <span>+ Add Dept Asset</span>
-                </button>
-                <button
-                  type="button"
-                  onclick="openModalInbound()"
-                  class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-[11px] sm:text-xs border border-slate-700 transition flex items-center justify-center gap-1.5 sm:gap-2 text-center"
-                >
-                  <i class="fa-solid fa-box-open text-cyan-400 text-xs"></i>
-                  <span>+ Inbound Stock</span>
-                </button>
-                <button
-                  type="button"
-                  onclick="navigateTo('create-item')"
-                  class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-[11px] sm:text-xs border border-slate-700 transition flex items-center justify-center gap-1.5 sm:gap-2 text-center"
-                >
-                  <i class="fa-solid fa-plus text-emerald-400 text-xs"></i>
-                  <span>+ Create Item</span>
-                </button>
-                <button
-                  type="button"
-                  onclick="exportFullBackupExcel()"
-                  class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 font-semibold text-[11px] sm:text-xs transition flex items-center justify-center gap-1.5 sm:gap-2 text-center"
-                >
-                  <i class="fa-solid fa-file-excel text-xs"></i>
-                  <span>Export All Excel</span>
-                </button>
+          <div class="glass-panel rounded-3xl p-6 md:p-8 border border-slate-800 relative overflow-hidden bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 shadow-2xl">
+            <!-- Decorative Background Radial Accents -->
+            <div class="absolute -right-10 -bottom-10 w-80 h-80 bg-pink-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="absolute top-0 right-1/4 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+            <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+              <!-- Left Column: Greeting, Description & Quick Actions -->
+              <div class="max-w-2xl flex-1">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20 text-xs font-semibold mb-3">
+                  <i class="fa-solid fa-shield-halved"></i>
+                  Hotel IT Operational Hub
+                </span>
+                <h2 id="hero-greeting-title" class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-snug">
+                  Welcome Admin! What are we diving into today?😉
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed">
+                  Single-source-of-truth for hotel IT infrastructure. Direct sync with Supabase BaaS and client-side SheetJS exports.
+                </p>
+                <div class="mt-5 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-3">
+                  <button
+                    type="button"
+                    onclick="openModalTransfer()"
+                    class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 text-white font-semibold text-[11px] sm:text-xs shadow-lg shadow-brand-500/25 transition flex items-center justify-center gap-1.5 sm:gap-2 text-center"
+                  >
+                    <i class="fa-solid fa-share-from-square text-xs"></i>
+                    <span>+ Add Dept Asset</span>
+                  </button>
+                  <button
+                    type="button"
+                    onclick="openModalInbound()"
+                    class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-[11px] sm:text-xs border border-slate-700 transition flex items-center justify-center gap-1.5 sm:gap-2 text-center"
+                  >
+                    <i class="fa-solid fa-box-open text-cyan-400 text-xs"></i>
+                    <span>+ Inbound Stock</span>
+                  </button>
+                  <button
+                    type="button"
+                    onclick="navigateTo('create-item')"
+                    class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-[11px] sm:text-xs border border-slate-700 transition flex items-center justify-center gap-1.5 sm:gap-2 text-center"
+                  >
+                    <i class="fa-solid fa-plus text-emerald-400 text-xs"></i>
+                    <span>+ Create Item</span>
+                  </button>
+                  <button
+                    type="button"
+                    onclick="exportFullBackupExcel()"
+                    class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 font-semibold text-[11px] sm:text-xs transition flex items-center justify-center gap-1.5 sm:gap-2 text-center"
+                  >
+                    <i class="fa-solid fa-file-excel text-xs"></i>
+                    <span>Export All Excel</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Right Column: Rattan-Inn High-Definition Vector Flowers Logo (Exact as Mockup Image 4) -->
+              <div class="shrink-0 flex items-center justify-center md:justify-end w-full md:w-auto mt-4 md:mt-0">
+                <div class="relative w-44 sm:w-56 md:w-64 lg:w-72 max-h-56 flex items-center justify-center group">
+                  <div class="absolute inset-0 bg-pink-500/15 rounded-full blur-2xl pointer-events-none group-hover:bg-pink-500/25 transition duration-500"></div>
+                  <img
+                    src="/public/assets/rattan_inn_logo.png"
+                    alt="Rattan-Inn Hotel Flowers Logo"
+                    class="relative z-10 w-full h-auto max-h-48 md:max-h-56 object-contain drop-shadow-[0_12px_24px_rgba(244,63,94,0.3)] select-none pointer-events-none transform group-hover:scale-105 transition duration-300"
+                  />
+                </div>
               </div>
             </div>
           </div>

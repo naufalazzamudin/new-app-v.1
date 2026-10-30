@@ -28,9 +28,39 @@ const STORAGE_KEYS = {
   DEMO_DATA: 'HOTEL_IT_DATA_CACHE'
 };
 
-// Default fallback Supabase credentials
-const DEFAULT_SUPABASE_URL = 'https://your-project-ref.supabase.co';
-const DEFAULT_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.your-anon-key-here';
+// Default fallback Supabase credentials (from Redeploy Auth)
+const DEFAULT_SUPABASE_URL = 'https://ufcutuputdpnepuhcwaq.supabase.co';
+const DEFAULT_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmY3V0dXB1dGRwbmVwdWhjd2FxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MzI0MjI1MywiZXhwIjoyMTA4ODE4MjUzfQ.skkTlQ0enTcK-DHMQVIsE0UpG7e6rubi9qGifGorZiM';
+
+// Universal Anti-Wrap Badge Formatters (Guarantee Clean Single-Line Badges)
+function formatCategoryBadge(category) {
+  const cat = category || '-';
+  return `<span class="badge-pill px-2.5 py-0.5 rounded-md text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">${escapeHtml(cat)}</span>`;
+}
+
+function formatPOStatusBadge(status) {
+  const isArrived = status === 'SUDAH DATANG';
+  return isArrived
+    ? `<span class="badge-pill px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 shrink-0"></span>SUDAH DATANG</span>`
+    : `<span class="badge-pill px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30"><span class="w-1.5 h-1.5 rounded-full bg-blue-400 mr-1.5 shrink-0"></span>BELUM DATANG</span>`;
+}
+
+function formatStockStatusBadge(availableStock) {
+  if (availableStock === 0) {
+    return `<span class="badge-pill px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30"><span class="w-1.5 h-1.5 rounded-full bg-rose-400 mr-1.5 shrink-0"></span>Out of Stock</span>`;
+  }
+  if (availableStock <= 2) {
+    return `<span class="badge-pill px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30"><span class="w-1.5 h-1.5 rounded-full bg-amber-400 mr-1.5 shrink-0"></span>Low Stock (${availableStock})</span>`;
+  }
+  return `<span class="badge-pill px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 shrink-0"></span>In Stock</span>`;
+}
+
+function formatMotionTypeBadge(type) {
+  const isTransfer = type === 'TRANSFER_TO_DEPARTMENT';
+  return isTransfer
+    ? `<span class="badge-pill px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30"><i class="fa-solid fa-arrow-right text-[9px] mr-1 shrink-0"></i>TRANSFER TO DEPT</span>`
+    : `<span class="badge-pill px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"><i class="fa-solid fa-arrow-rotate-left text-[9px] mr-1 shrink-0"></i>RETURN TO IT</span>`;
+}
 
 // Application State
 let supabaseClient = null;
