@@ -471,10 +471,20 @@
             <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
               <!-- Left Column: Greeting, Description & Quick Actions -->
               <div class="max-w-2xl flex-1">
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20 text-xs font-semibold mb-3">
-                  <i class="fa-solid fa-shield-halved"></i>
-                  Hotel IT Operational Hub
-                </span>
+                <div class="flex flex-wrap items-center gap-2 sm:gap-2.5 mb-3.5">
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/10 text-brand-300 border border-brand-500/20 text-xs font-semibold shrink-0">
+                    <i class="fa-solid fa-shield-halved text-[11px]"></i>
+                    Hotel IT Operational Hub
+                  </span>
+
+                  <!-- Real-Time Device Clock & Date (Above Greeting) -->
+                  <div id="header-clock-container" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800/90 border border-slate-700/80 text-xs shadow-sm shrink-0">
+                    <i class="fa-regular fa-clock text-cyan-400 text-xs shrink-0"></i>
+                    <span id="header-clock-time" class="font-mono font-semibold text-slate-100 tracking-wider">00:00:00</span>
+                    <span id="header-clock-date" class="text-[11px] text-slate-400 border-l border-slate-700 pl-2 whitespace-nowrap">-- --- ----</span>
+                  </div>
+                </div>
+
                 <h2 id="hero-greeting-title" class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-snug">
                   Welcome Admin! What are we diving into today?😉
                 </h2>

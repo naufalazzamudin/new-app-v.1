@@ -227,9 +227,56 @@ function getInitialSeedData() {
 // ==============================================================================
 // 3. STORAGE & SUPABASE INITIALIZATION
 // ==============================================================================
+// ==============================================================================
+// 3. STORAGE & SUPABASE INITIALIZATION & REALTIME ENGINE
+// ==============================================================================
+let realtimeChannel = null;
+let realtimeDebounceTimer = null;
+let clockIntervalId = null;
+
+// Real-Time Device Clock (HH:MM:SS & Indonesian/International Date)
+function startRealTimeDeviceClock() {
+  if (clockIntervalId) clearInterval(clockIntervalId);
+
+  function updateClock() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const timeStr = `${hours}:${minutes}:${seconds}`;
+
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+    const dayName = days[now.getDay()];
+    const dateNum = now.getDate();
+    const monthName = months[now.getMonth()];
+    const year = now.getFullYear();
+    const dateStr = `${dayName}, ${dateNum} ${monthName} ${year}`;
+
+    const timeEl = document.getElementById('header-clock-time');
+    const dateEl = document.getElementById('header-clock-date');
+
+    if (timeEl) timeEl.textContent = timeStr;
+    if (dateEl) dateEl.textContent = dateStr;
+  }
+
+  updateClock();
+  clockIntervalId = setInterval(updateClock, 1000);
+}
+
 function initSupabaseClient() {
-  const url = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL) || DEFAULT_SUPABASE_URL;
-  const key = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY) || DEFAULT_SUPABASE_KEY;
+  let url = localStorage.getItem(STORAGE_KEYS.SUPABASE_URL);
+  let key = localStorage.getItem(STORAGE_KEYS.SUPABASE_KEY);
+
+  // Auto-migrate from placeholder to default live credentials
+  if (!url || url.includes('your-project-ref')) {
+    url = DEFAULT_SUPABASE_URL;
+    localStorage.setItem(STORAGE_KEYS.SUPABASE_URL, url);
+  }
+  if (!key || key.includes('your-anon-key-here')) {
+    key = DEFAULT_SUPABASE_KEY;
+    localStorage.setItem(STORAGE_KEYS.SUPABASE_KEY, key);
+  }
 
   const isValidUrl = url && url.startsWith('http') && !url.includes('your-project-ref');
 
@@ -238,6 +285,7 @@ function initSupabaseClient() {
       supabaseClient = window.supabase.createClient(url, key);
       isLiveSupabase = true;
       updateConnectionBadge(true);
+      setupSupabaseRealtime();
       return;
     } catch (e) {
       console.warn('Supabase client init warning:', e);
@@ -246,6 +294,187 @@ function initSupabaseClient() {
 
   isLiveSupabase = false;
   updateConnectionBadge(false);
+}
+
+// 3.1 SUPABASE REALTIME MULTI-USER SYNC LISTENER
+function setupSupabaseRealtime() {
+  if (!isLiveSupabase || !supabaseClient) return;
+
+  // Cleanup active channel if already present
+  if (realtimeChannel) {
+    try {
+      supabaseClient.removeChannel(realtimeChannel);
+    } catch (e) {
+      console.warn('Realtime cleanup warning:', e);
+    }
+    realtimeChannel = null;
+  }
+
+  try {
+    realtimeChannel = supabaseClient
+      .channel('public-db-realtime-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'master_items' },
+        (payload) => handleRealtimeChange('master_items', payload)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'stock_transactions' },
+        (payload) => handleRealtimeChange('stock_transactions', payload)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'department_movements' },
+        (payload) => handleRealtimeChange('department_movements', payload)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'purchase_orders' },
+        (payload) => handleRealtimeChange('purchase_orders', payload)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'preloved' },
+        (payload) => handleRealtimeChange('preloved', payload)
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'activities' },
+        (payload) => handleRealtimeChange('activities', payload)
+      )
+      .subscribe((status) => {
+        const connText = document.getElementById('header-conn-text');
+        if (status === 'SUBSCRIBED') {
+          console.log('[Supabase Realtime] Subscribed to real-time events on all 6 tables');
+          if (connText) connText.textContent = 'Supabase Live (Realtime)';
+        } else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') {
+          console.warn('[Supabase Realtime] Status notification:', status);
+        }
+      });
+  } catch (err) {
+    console.warn('[Supabase Realtime] Setup error:', err);
+  }
+}
+
+// Handler for incoming database changes from other users
+function handleRealtimeChange(table, payload) {
+  const { eventType, new: newRecord, old: oldRecord } = payload;
+  console.log(`[Supabase Realtime Event] ${table} -> ${eventType}`, newRecord || oldRecord);
+
+  // Directly reconcile local state for sub-second UI response
+  if (table === 'master_items') {
+    if (eventType === 'INSERT' && newRecord) {
+      if (!state.masterItems.some(i => i.id === newRecord.id)) {
+        state.masterItems.unshift(newRecord);
+      }
+    } else if (eventType === 'UPDATE' && newRecord) {
+      const idx = state.masterItems.findIndex(i => i.id === newRecord.id);
+      if (idx !== -1) state.masterItems[idx] = newRecord;
+      else state.masterItems.unshift(newRecord);
+    } else if (eventType === 'DELETE' && oldRecord) {
+      state.masterItems = state.masterItems.filter(i => i.id !== oldRecord.id);
+    }
+  } else if (table === 'stock_transactions') {
+    if (eventType === 'INSERT' && newRecord) {
+      if (!state.stockTransactions.some(t => t.id === newRecord.id)) {
+        state.stockTransactions.unshift(newRecord);
+      }
+    } else if (eventType === 'UPDATE' && newRecord) {
+      const idx = state.stockTransactions.findIndex(t => t.id === newRecord.id);
+      if (idx !== -1) state.stockTransactions[idx] = newRecord;
+      else state.stockTransactions.unshift(newRecord);
+    } else if (eventType === 'DELETE' && oldRecord) {
+      state.stockTransactions = state.stockTransactions.filter(t => t.id !== oldRecord.id);
+    }
+  } else if (table === 'department_movements') {
+    if (eventType === 'INSERT' && newRecord) {
+      if (!state.departmentMovements.some(m => m.id === newRecord.id)) {
+        state.departmentMovements.unshift(newRecord);
+      }
+    } else if (eventType === 'UPDATE' && newRecord) {
+      const idx = state.departmentMovements.findIndex(m => m.id === newRecord.id);
+      if (idx !== -1) state.departmentMovements[idx] = newRecord;
+      else state.departmentMovements.unshift(newRecord);
+    } else if (eventType === 'DELETE' && oldRecord) {
+      state.departmentMovements = state.departmentMovements.filter(m => m.id !== oldRecord.id);
+    }
+  } else if (table === 'purchase_orders') {
+    if (eventType === 'INSERT' && newRecord) {
+      if (!state.purchaseOrders.some(p => p.id === newRecord.id)) {
+        state.purchaseOrders.unshift(newRecord);
+      }
+    } else if (eventType === 'UPDATE' && newRecord) {
+      const idx = state.purchaseOrders.findIndex(p => p.id === newRecord.id);
+      if (idx !== -1) state.purchaseOrders[idx] = newRecord;
+      else state.purchaseOrders.unshift(newRecord);
+    } else if (eventType === 'DELETE' && oldRecord) {
+      state.purchaseOrders = state.purchaseOrders.filter(p => p.id !== oldRecord.id);
+    }
+  } else if (table === 'preloved') {
+    if (eventType === 'INSERT' && newRecord) {
+      if (!state.preloved.some(p => p.id === newRecord.id)) {
+        state.preloved.unshift(newRecord);
+      }
+    } else if (eventType === 'UPDATE' && newRecord) {
+      const idx = state.preloved.findIndex(p => p.id === newRecord.id);
+      if (idx !== -1) state.preloved[idx] = newRecord;
+      else state.preloved.unshift(newRecord);
+    } else if (eventType === 'DELETE' && oldRecord) {
+      state.preloved = state.preloved.filter(p => p.id !== oldRecord.id);
+    }
+  } else if (table === 'activities') {
+    if (eventType === 'INSERT' && newRecord) {
+      if (!state.activities.some(a => a.id === newRecord.id)) {
+        state.activities.unshift(newRecord);
+      }
+    } else if (eventType === 'UPDATE' && newRecord) {
+      const idx = state.activities.findIndex(a => a.id === newRecord.id);
+      if (idx !== -1) state.activities[idx] = newRecord;
+    } else if (eventType === 'DELETE' && oldRecord) {
+      state.activities = state.activities.filter(a => a.id !== oldRecord.id);
+    }
+  }
+
+  // Update local cache and refresh all UI components immediately
+  localStorage.setItem(STORAGE_KEYS.DEMO_DATA, JSON.stringify(state));
+  refreshAllViews();
+
+  // Debounced full background sync to guarantee comprehensive relational consistency
+  clearTimeout(realtimeDebounceTimer);
+  realtimeDebounceTimer = setTimeout(() => {
+    syncAllFromSupabaseQuietly();
+  }, 1000);
+}
+
+// Background reconciliation fetcher
+async function syncAllFromSupabaseQuietly() {
+  if (!isLiveSupabase || !supabaseClient) return;
+
+  try {
+    const [itemsRes, txsRes, movementsRes, poRes, prelovedRes, activitiesRes] = await Promise.all([
+      supabaseClient.from('master_items').select('*').order('created_at', { ascending: false }),
+      supabaseClient.from('stock_transactions').select('*').order('transaction_date', { ascending: false }),
+      supabaseClient.from('department_movements').select('*').order('date', { ascending: false }),
+      supabaseClient.from('purchase_orders').select('*').order('date_order', { ascending: false }),
+      supabaseClient.from('preloved').select('*').order('date_repaired', { ascending: false }),
+      supabaseClient.from('activities').select('*').order('timestamp', { ascending: false }).limit(25)
+    ]);
+
+    if (!itemsRes.error && itemsRes.data) {
+      state.masterItems = itemsRes.data;
+      state.stockTransactions = txsRes.data || [];
+      state.departmentMovements = movementsRes.data || [];
+      state.purchaseOrders = poRes.data || [];
+      state.preloved = prelovedRes.data || [];
+      state.activities = activitiesRes.data || [];
+
+      localStorage.setItem(STORAGE_KEYS.DEMO_DATA, JSON.stringify(state));
+      refreshAllViews();
+    }
+  } catch (err) {
+    console.warn('[Realtime Sync Quiet Fetch Warning]:', err);
+  }
 }
 
 function updateConnectionBadge(isLive) {
@@ -260,11 +489,11 @@ function updateConnectionBadge(isLive) {
       headerStatus.className = 'hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-[11px] font-medium text-emerald-300';
     }
     if (settingsBadge) {
-      settingsBadge.textContent = 'Connected (Live BaaS)';
+      settingsBadge.textContent = 'Connected (Live BaaS & Realtime)';
       settingsBadge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
     }
     if (configLabel) {
-      configLabel.textContent = 'Ready for Live Supabase';
+      configLabel.textContent = 'Ready for Live Supabase & Realtime Sync';
       configLabel.className = 'text-[11px] text-emerald-400 font-medium';
     }
   } else {
@@ -314,6 +543,7 @@ async function loadApplicationData() {
         state.activities = activitiesRes.data || [];
 
         localStorage.setItem(STORAGE_KEYS.DEMO_DATA, JSON.stringify(state));
+        setupSupabaseRealtime();
         refreshAllViews();
         return;
       }
@@ -711,51 +941,43 @@ function renderInventoryTable() {
   tbody.innerHTML = filtered.map(item => {
     const { totalInbound, totalTransferred, totalReturned, availableStock } = calculateStockMetrics(item.id);
 
-    const statusBadge = availableStock === 0
-      ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30">Out of Stock</span>`
-      : availableStock <= 2
-      ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30">Low Stock (${availableStock})</span>`
-      : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">In Stock</span>`;
-
     const photoImg = item.photo_url
-      ? `<img src="${item.photo_url}" onclick="openLightbox('${item.photo_url}', '${escapeHtml(item.item_name)}')" class="w-10 h-10 rounded-lg object-cover cursor-pointer hover:scale-105 transition border border-slate-700">`
-      : `<div class="w-10 h-10 rounded-lg bg-slate-800 text-slate-500 flex items-center justify-center text-sm border border-slate-700"><i class="fa-solid fa-box"></i></div>`;
+      ? `<img src="${item.photo_url}" onclick="openLightbox('${item.photo_url}', '${escapeHtml(item.item_name)}')" class="w-10 h-10 rounded-lg object-cover cursor-pointer hover:scale-105 transition border border-slate-700 shrink-0">`
+      : `<div class="w-10 h-10 rounded-lg bg-slate-800 text-slate-500 flex items-center justify-center text-sm border border-slate-700 shrink-0"><i class="fa-solid fa-box"></i></div>`;
 
     return `
       <tr class="hover:bg-slate-900/50 transition">
-        <td class="py-3 px-4">
+        <td class="py-3 px-4 min-w-[220px]">
           <div
             class="flex items-center gap-3 cursor-pointer group/item"
             onclick="openItemInboundHistoryModal('${item.id}')"
             title="Klik untuk melihat histori stok masuk item ini"
           >
             ${photoImg}
-            <div>
+            <div class="min-w-0">
               <div class="font-bold text-white group-hover/item:text-cyan-400 transition flex items-center gap-1.5">
-                <span>${escapeHtml(item.item_name)}</span>
-                <i class="fa-solid fa-clock-rotate-left text-[11px] text-cyan-400 opacity-60 group-hover/item:opacity-100 transition"></i>
+                <span class="truncate">${escapeHtml(item.item_name)}</span>
+                <i class="fa-solid fa-clock-rotate-left text-[11px] text-cyan-400 opacity-60 group-hover/item:opacity-100 transition shrink-0"></i>
               </div>
               <div class="text-[11px] text-slate-400 font-mono">${escapeHtml(item.item_code || 'SKU-GEN')}</div>
             </div>
           </div>
         </td>
-        <td class="py-3 px-4">
-          <span class="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-            ${item.category}
-          </span>
+        <td class="py-3 px-4 whitespace-nowrap">
+          ${formatCategoryBadge(item.category)}
         </td>
-        <td class="py-3 px-4 text-center font-mono font-semibold text-slate-300">${totalInbound}</td>
-        <td class="py-3 px-4 text-center font-mono text-amber-400">${totalTransferred}</td>
-        <td class="py-3 px-4 text-center font-mono text-emerald-400">${totalReturned}</td>
-        <td class="py-3 px-4 text-center font-mono text-sm font-bold text-white bg-slate-900/40">${availableStock}</td>
-        <td class="py-3 px-4">${statusBadge}</td>
-        <td class="py-3 px-4 text-right">
+        <td class="py-3 px-4 text-center font-mono font-semibold text-slate-300 whitespace-nowrap">${totalInbound}</td>
+        <td class="py-3 px-4 text-center font-mono text-amber-400 whitespace-nowrap">${totalTransferred}</td>
+        <td class="py-3 px-4 text-center font-mono text-emerald-400 whitespace-nowrap">${totalReturned}</td>
+        <td class="py-3 px-4 text-center font-mono text-sm font-bold text-white bg-slate-900/40 whitespace-nowrap">${availableStock}</td>
+        <td class="py-3 px-4 whitespace-nowrap">${formatStockStatusBadge(availableStock)}</td>
+        <td class="py-3 px-4 text-right whitespace-nowrap">
           <div class="flex items-center justify-end gap-1.5">
             <button
               type="button"
               onclick="openItemInboundHistoryModal('${item.id}')"
               title="Lihat Histori Stok Masuk"
-              class="p-1.5 rounded-lg bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white transition text-xs border border-cyan-500/30"
+              class="p-1.5 rounded-lg bg-cyan-600/20 hover:bg-cyan-600 text-cyan-300 hover:text-white transition text-xs border border-cyan-500/30 shrink-0"
             >
               <i class="fa-solid fa-clock-rotate-left"></i>
             </button>
@@ -763,7 +985,7 @@ function renderInventoryTable() {
               type="button"
               onclick="openModalTransfer('${item.id}')"
               title="Transfer to Department"
-              class="p-1.5 rounded-lg bg-brand-600/20 hover:bg-brand-600 text-brand-300 hover:text-white transition text-xs"
+              class="p-1.5 rounded-lg bg-brand-600/20 hover:bg-brand-600 text-brand-300 hover:text-white transition text-xs shrink-0"
             >
               <i class="fa-solid fa-share-from-square"></i>
             </button>
@@ -771,7 +993,7 @@ function renderInventoryTable() {
               type="button"
               onclick="openModalInbound('${item.id}')"
               title="Add Inbound Stock"
-              class="p-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white transition text-xs"
+              class="p-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white transition text-xs shrink-0"
             >
               <i class="fa-solid fa-plus"></i>
             </button>
@@ -779,7 +1001,7 @@ function renderInventoryTable() {
               type="button"
               onclick="confirmDeleteMasterItem('${item.id}', '${escapeHtml(item.item_name)}')"
               title="Delete Item"
-              class="p-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white transition text-xs"
+              class="p-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white transition text-xs shrink-0"
             >
               <i class="fa-solid fa-trash"></i>
             </button>
@@ -972,33 +1194,31 @@ function renderDepartmentalView() {
 
       return `
         <tr class="hover:bg-slate-900/50 transition">
-          <td class="py-3 px-4">
+          <td class="py-3 px-4 min-w-[200px]">
             <div class="flex items-center gap-3">
               ${photoImg}
-              <div>
-                <div class="font-bold text-white">${escapeHtml(item.item_name)}</div>
+              <div class="min-w-0">
+                <div class="font-bold text-white truncate">${escapeHtml(item.item_name)}</div>
                 <div class="text-[11px] text-slate-400 font-mono">${escapeHtml(item.item_code || 'SKU-GEN')}</div>
               </div>
             </div>
           </td>
-          <td class="py-3 px-4">
-            <span class="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-              ${item.category}
-            </span>
+          <td class="py-3 px-4 whitespace-nowrap">
+            ${formatCategoryBadge(item.category)}
           </td>
-          <td class="py-3 px-4 text-center font-mono font-bold text-amber-400 text-sm bg-slate-900/40">
+          <td class="py-3 px-4 text-center font-mono font-bold text-amber-400 text-sm bg-slate-900/40 whitespace-nowrap">
             ${held}
           </td>
-          <td class="py-3 px-4 text-center font-mono text-slate-300">${received}</td>
-          <td class="py-3 px-4 text-center font-mono text-emerald-400">${returned}</td>
-          <td class="py-3 px-4 text-slate-300">${escapeHtml(lastRecipient)}</td>
-          <td class="py-3 px-4 font-mono text-[11px] text-slate-400">${lastDate}</td>
-          <td class="py-3 px-4 text-right">
+          <td class="py-3 px-4 text-center font-mono text-slate-300 whitespace-nowrap">${received}</td>
+          <td class="py-3 px-4 text-center font-mono text-emerald-400 whitespace-nowrap">${returned}</td>
+          <td class="py-3 px-4 text-slate-300 whitespace-nowrap">${escapeHtml(lastRecipient)}</td>
+          <td class="py-3 px-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">${lastDate}</td>
+          <td class="py-3 px-4 text-right whitespace-nowrap">
             ${held > 0 ? `
               <button
                 type="button"
                 onclick="openModalReturn('${activeDept}', '${item.id}')"
-                class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 font-semibold text-xs transition"
+                class="px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-slate-950 font-semibold text-xs transition shrink-0"
               >
                 Return to IT
               </button>
@@ -1640,18 +1860,16 @@ function renderMotionTable() {
 
     return `
       <tr class="hover:bg-slate-900/50 transition">
-        <td class="py-3 px-4 font-mono text-[11px] text-slate-400">${mov.date}</td>
-        <td class="py-3 px-4 font-bold text-white">${escapeHtml(itemName)}</td>
-        <td class="py-3 px-4">
-          <span class="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-            ${itemCat}
-          </span>
+        <td class="py-3 px-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">${mov.date}</td>
+        <td class="py-3 px-4 font-bold text-white min-w-[180px]">${escapeHtml(itemName)}</td>
+        <td class="py-3 px-4 whitespace-nowrap">
+          ${formatCategoryBadge(itemCat)}
         </td>
-        <td class="py-3 px-4 text-center">${typeBadge}</td>
-        <td class="py-3 px-4 text-slate-300 font-medium">${mov.department}</td>
-        <td class="py-3 px-4 text-center font-mono font-bold ${isTransfer ? 'text-amber-400' : 'text-emerald-400'}">${mov.quantity}</td>
-        <td class="py-3 px-4 text-slate-300">${escapeHtml(mov.recipient_name || '-')}</td>
-        <td class="py-3 px-4 text-slate-400 text-[11px]">${escapeHtml(mov.remark || '-')}</td>
+        <td class="py-3 px-4 text-center whitespace-nowrap">${formatMotionTypeBadge(mov.type)}</td>
+        <td class="py-3 px-4 text-slate-300 font-medium whitespace-nowrap">${mov.department}</td>
+        <td class="py-3 px-4 text-center font-mono font-bold ${isTransfer ? 'text-amber-400' : 'text-emerald-400'} whitespace-nowrap">${mov.quantity}</td>
+        <td class="py-3 px-4 text-slate-300 whitespace-nowrap">${escapeHtml(mov.recipient_name || '-')}</td>
+        <td class="py-3 px-4 text-slate-400 text-[11px] min-w-[160px]">${escapeHtml(mov.remark || '-')}</td>
       </tr>
     `;
   }).join('');
@@ -1699,34 +1917,29 @@ function renderPOTable() {
 
   tbody.innerHTML = filtered.map(po => {
     const isArrived = po.status === 'SUDAH DATANG';
-    const statusBadge = isArrived
-      ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">SUDAH DATANG</span>`
-      : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30">BELUM DATANG</span>`;
 
     return `
       <tr class="hover:bg-slate-900/50 transition">
-        <td class="py-3 px-4">
-          <div class="font-bold text-white">${escapeHtml(po.item_name)}</div>
+        <td class="py-3 px-4 min-w-[200px]">
+          <div class="font-bold text-white truncate">${escapeHtml(po.item_name)}</div>
           <div class="text-[11px] text-slate-400 font-mono">${escapeHtml(po.po_number || 'PO-GEN')}</div>
         </td>
-        <td class="py-3 px-4">
-          <span class="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-            ${po.category}
-          </span>
+        <td class="py-3 px-4 whitespace-nowrap">
+          ${formatCategoryBadge(po.category)}
         </td>
-        <td class="py-3 px-4 font-mono text-[11px] text-slate-400">${po.date_order}</td>
-        <td class="py-3 px-4 font-mono text-[11px] text-slate-400">${po.date_arrival || '-'}</td>
-        <td class="py-3 px-4 text-center font-mono font-bold text-white">${po.quantity}</td>
-        <td class="py-3 px-4 text-slate-300">${escapeHtml(po.for_use)}</td>
-        <td class="py-3 px-4">${statusBadge}</td>
-        <td class="py-3 px-4 text-right">
+        <td class="py-3 px-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">${po.date_order}</td>
+        <td class="py-3 px-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">${po.date_arrival || '-'}</td>
+        <td class="py-3 px-4 text-center font-mono font-bold text-white whitespace-nowrap">${po.quantity}</td>
+        <td class="py-3 px-4 text-slate-300 min-w-[150px]">${escapeHtml(po.for_use)}</td>
+        <td class="py-3 px-4 whitespace-nowrap">${formatPOStatusBadge(po.status)}</td>
+        <td class="py-3 px-4 text-right whitespace-nowrap">
           <div class="flex items-center justify-end gap-1.5">
             ${!isArrived ? `
               <button
                 type="button"
                 onclick="markPOArrived('${po.id}')"
                 title="Mark Arrived"
-                class="p-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white transition text-xs"
+                class="p-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white transition text-xs shrink-0"
               >
                 <i class="fa-solid fa-check"></i>
               </button>
@@ -1735,7 +1948,7 @@ function renderPOTable() {
               type="button"
               onclick="openModalPO('${po.id}')"
               title="Edit PO"
-              class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition text-xs border border-slate-700"
+              class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition text-xs border border-slate-700 shrink-0"
             >
               <i class="fa-solid fa-pen-to-square"></i>
             </button>
@@ -1743,7 +1956,7 @@ function renderPOTable() {
               type="button"
               onclick="confirmDeletePO('${po.id}', '${escapeHtml(po.item_name)}')"
               title="Delete PO"
-              class="p-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white transition text-xs"
+              class="p-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white transition text-xs shrink-0"
             >
               <i class="fa-solid fa-trash"></i>
             </button>
@@ -1825,26 +2038,24 @@ function renderPrelovedTable() {
   tbody.innerHTML = filtered.map(pre => {
     return `
       <tr class="hover:bg-slate-900/50 transition">
-        <td class="py-3 px-4">
+        <td class="py-3 px-4 min-w-[180px]">
           <div class="font-bold text-white">${escapeHtml(pre.item_name)}</div>
           <div class="text-[11px] text-teal-400 font-mono">${escapeHtml(pre.item_code || 'PRE-GEN')}</div>
         </td>
-        <td class="py-3 px-4">
-          <span class="px-2 py-0.5 rounded-lg text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
-            ${pre.category}
-          </span>
+        <td class="py-3 px-4 whitespace-nowrap">
+          ${formatCategoryBadge(pre.category)}
         </td>
-        <td class="py-3 px-4 font-mono text-[11px] text-slate-400">${pre.date_repaired}</td>
-        <td class="py-3 px-4 text-center font-mono font-bold text-white">${pre.quantity}</td>
-        <td class="py-3 px-4 font-mono text-xs text-slate-300">${escapeHtml(pre.serial_number || '-')}</td>
-        <td class="py-3 px-4 text-slate-400 text-xs">${escapeHtml(pre.remark || '-')}</td>
-        <td class="py-3 px-4 text-right">
+        <td class="py-3 px-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">${pre.date_repaired}</td>
+        <td class="py-3 px-4 text-center font-mono font-bold text-white whitespace-nowrap">${pre.quantity}</td>
+        <td class="py-3 px-4 font-mono text-xs text-slate-300 whitespace-nowrap">${escapeHtml(pre.serial_number || '-')}</td>
+        <td class="py-3 px-4 text-slate-400 text-xs min-w-[160px]">${escapeHtml(pre.remark || '-')}</td>
+        <td class="py-3 px-4 text-right whitespace-nowrap">
           <div class="flex items-center justify-end gap-1.5">
             <button
               type="button"
               onclick="openModalPreloved('${pre.id}')"
               title="Edit Preloved"
-              class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition text-xs border border-slate-700"
+              class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition text-xs border border-slate-700 shrink-0"
             >
               <i class="fa-solid fa-pen-to-square"></i>
             </button>
@@ -1919,31 +2130,33 @@ function renderMonthlyView() {
     }
 
     container.innerHTML = `
-      <table class="w-full text-left text-xs">
-        <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
-          <tr>
-            <th class="py-2.5 px-4">Tanggal</th>
-            <th class="py-2.5 px-4">Nama Barang</th>
-            <th class="py-2.5 px-4">Kategori</th>
-            <th class="py-2.5 px-4 text-center">Unit Masuk</th>
-            <th class="py-2.5 px-4">Catatan</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-800/80">
-          ${txs.map(t => {
-            const item = state.masterItems.find(i => i.id === t.item_id);
-            return `
-              <tr>
-                <td class="py-2.5 px-4 font-mono text-slate-400">${t.transaction_date}</td>
-                <td class="py-2.5 px-4 font-bold text-white">${escapeHtml(item?.item_name || '-')}</td>
-                <td class="py-2.5 px-4">${item?.category || '-'}</td>
-                <td class="py-2.5 px-4 text-center font-mono font-bold text-cyan-400">${t.quantity}</td>
-                <td class="py-2.5 px-4 text-slate-400">${escapeHtml(t.remark || '-')}</td>
-              </tr>
-            `;
-          }).join('')}
-        </tbody>
-      </table>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs min-w-[700px]">
+          <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
+            <tr>
+              <th class="py-2.5 px-4 whitespace-nowrap">Tanggal</th>
+              <th class="py-2.5 px-4 min-w-[200px]">Nama Barang</th>
+              <th class="py-2.5 px-4 whitespace-nowrap">Kategori</th>
+              <th class="py-2.5 px-4 text-center whitespace-nowrap">Unit Masuk</th>
+              <th class="py-2.5 px-4 min-w-[150px]">Catatan</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/80">
+            ${txs.map(t => {
+              const item = state.masterItems.find(i => i.id === t.item_id);
+              return `
+                <tr>
+                  <td class="py-2.5 px-4 font-mono text-slate-400 whitespace-nowrap">${t.transaction_date}</td>
+                  <td class="py-2.5 px-4 font-bold text-white">${escapeHtml(item?.item_name || '-')}</td>
+                  <td class="py-2.5 px-4 whitespace-nowrap">${formatCategoryBadge(item?.category)}</td>
+                  <td class="py-2.5 px-4 text-center font-mono font-bold text-cyan-400 whitespace-nowrap">+${t.quantity}</td>
+                  <td class="py-2.5 px-4 text-slate-400">${escapeHtml(t.remark || '-')}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
     `;
   } else if (currentMonthlyTab === 'movements') {
     const movs = state.departmentMovements.filter(m => m.date && m.date.startsWith(ym));
@@ -1953,38 +2166,38 @@ function renderMonthlyView() {
     }
 
     container.innerHTML = `
-      <table class="w-full text-left text-xs">
-        <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
-          <tr>
-            <th class="py-2.5 px-4">Tanggal</th>
-            <th class="py-2.5 px-4">Barang</th>
-            <th class="py-2.5 px-4">Departemen</th>
-            <th class="py-2.5 px-4 text-center">Jenis</th>
-            <th class="py-2.5 px-4 text-center">Qty</th>
-            <th class="py-2.5 px-4">PIC / Penerima</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-800/80">
-          ${movs.map(m => {
-            const item = state.masterItems.find(i => i.id === m.item_id);
-            const isTrans = m.type === 'TRANSFER_TO_DEPARTMENT';
-            return `
-              <tr>
-                <td class="py-2.5 px-4 font-mono text-slate-400">${m.date}</td>
-                <td class="py-2.5 px-4 font-bold text-white">${escapeHtml(item?.item_name || '-')}</td>
-                <td class="py-2.5 px-4">${m.department}</td>
-                <td class="py-2.5 px-4 text-center">
-                  <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isTrans ? 'bg-amber-500/10 text-amber-400' : 'bg-emerald-500/10 text-emerald-400'}">
-                    ${isTrans ? 'TRANSFER' : 'RETURN'}
-                  </span>
-                </td>
-                <td class="py-2.5 px-4 text-center font-mono font-bold ${isTrans ? 'text-amber-400' : 'text-emerald-400'}">${m.quantity}</td>
-                <td class="py-2.5 px-4 text-slate-300">${escapeHtml(m.recipient_name || '-')}</td>
-              </tr>
-            `;
-          }).join('')}
-        </tbody>
-      </table>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs min-w-[750px]">
+          <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
+            <tr>
+              <th class="py-2.5 px-4 whitespace-nowrap">Tanggal</th>
+              <th class="py-2.5 px-4 min-w-[180px]">Barang</th>
+              <th class="py-2.5 px-4 whitespace-nowrap">Departemen</th>
+              <th class="py-2.5 px-4 text-center whitespace-nowrap">Jenis</th>
+              <th class="py-2.5 px-4 text-center whitespace-nowrap">Qty</th>
+              <th class="py-2.5 px-4 whitespace-nowrap">PIC / Penerima</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/80">
+            ${movs.map(m => {
+              const item = state.masterItems.find(i => i.id === m.item_id);
+              const isTrans = m.type === 'TRANSFER_TO_DEPARTMENT';
+              return `
+                <tr>
+                  <td class="py-2.5 px-4 font-mono text-slate-400 whitespace-nowrap">${m.date}</td>
+                  <td class="py-2.5 px-4 font-bold text-white">${escapeHtml(item?.item_name || '-')}</td>
+                  <td class="py-2.5 px-4 whitespace-nowrap text-slate-300 font-medium">${m.department}</td>
+                  <td class="py-2.5 px-4 text-center whitespace-nowrap">
+                    ${formatMotionTypeBadge(m.type)}
+                  </td>
+                  <td class="py-2.5 px-4 text-center font-mono font-bold ${isTrans ? 'text-amber-400' : 'text-emerald-400'} whitespace-nowrap">${m.quantity}</td>
+                  <td class="py-2.5 px-4 text-slate-300 whitespace-nowrap">${escapeHtml(m.recipient_name || '-')}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
     `;
   } else if (currentMonthlyTab === 'po') {
     const pos = state.purchaseOrders.filter(p => p.date_order && p.date_order.startsWith(ym));
@@ -1994,59 +2207,63 @@ function renderMonthlyView() {
     }
 
     container.innerHTML = `
-      <table class="w-full text-left text-xs">
-        <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
-          <tr>
-            <th class="py-2.5 px-4">PO Number</th>
-            <th class="py-2.5 px-4">Barang</th>
-            <th class="py-2.5 px-4">Tgl Order</th>
-            <th class="py-2.5 px-4 text-center">Qty</th>
-            <th class="py-2.5 px-4">Status</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-800/80">
-          ${pos.map(p => `
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs min-w-[700px]">
+          <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
             <tr>
-              <td class="py-2.5 px-4 font-mono text-slate-400">${p.po_number || '-'}</td>
-              <td class="py-2.5 px-4 font-bold text-white">${escapeHtml(p.item_name)}</td>
-              <td class="py-2.5 px-4 font-mono text-slate-400">${p.date_order}</td>
-              <td class="py-2.5 px-4 text-center font-mono font-bold">${p.quantity}</td>
-              <td class="py-2.5 px-4">${p.status}</td>
+              <th class="py-2.5 px-4 whitespace-nowrap">PO Number</th>
+              <th class="py-2.5 px-4 min-w-[200px]">Barang</th>
+              <th class="py-2.5 px-4 whitespace-nowrap">Tgl Order</th>
+              <th class="py-2.5 px-4 text-center whitespace-nowrap">Qty</th>
+              <th class="py-2.5 px-4 whitespace-nowrap">Status</th>
             </tr>
-          `).join('')}
-        </tbody>
-      </table>
+          </thead>
+          <tbody class="divide-y divide-slate-800/80">
+            ${pos.map(p => `
+              <tr>
+                <td class="py-2.5 px-4 font-mono text-slate-400 whitespace-nowrap">${p.po_number || '-'}</td>
+                <td class="py-2.5 px-4 font-bold text-white">${escapeHtml(p.item_name)}</td>
+                <td class="py-2.5 px-4 font-mono text-slate-400 whitespace-nowrap">${p.date_order}</td>
+                <td class="py-2.5 px-4 text-center font-mono font-bold whitespace-nowrap">${p.quantity}</td>
+                <td class="py-2.5 px-4 whitespace-nowrap">${formatPOStatusBadge(p.status)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
     `;
   } else if (currentMonthlyTab === 'preloved') {
     const pres = state.preloved.filter(p => p.date_repaired && p.date_repaired.startsWith(ym));
     if (pres.length === 0) {
-      container.innerHTML = `<div class="p-8 text-center text-slate-500">Tidak ada preloved hardware pada periode ${ym}.</div>`;
+      container.innerHTML = `<div class="p-8 text-center text-slate-500">Tidak ada damaged hardware pada periode ${ym}.</div>`;
       return;
     }
 
     container.innerHTML = `
-      <table class="w-full text-left text-xs">
-        <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
-          <tr>
-            <th class="py-2.5 px-4">Kode</th>
-            <th class="py-2.5 px-4">Barang Rekondisi</th>
-            <th class="py-2.5 px-4">Tgl Selesai</th>
-            <th class="py-2.5 px-4 text-center">Qty</th>
-            <th class="py-2.5 px-4">Remark</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-800/80">
-          ${pres.map(p => `
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs min-w-[700px]">
+          <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
             <tr>
-              <td class="py-2.5 px-4 font-mono text-teal-400">${p.item_code || '-'}</td>
-              <td class="py-2.5 px-4 font-bold text-white">${escapeHtml(p.item_name)}</td>
-              <td class="py-2.5 px-4 font-mono text-slate-400">${p.date_repaired}</td>
-              <td class="py-2.5 px-4 text-center font-mono font-bold">${p.quantity}</td>
-              <td class="py-2.5 px-4 text-slate-400">${escapeHtml(p.remark || '-')}</td>
+              <th class="py-2.5 px-4 whitespace-nowrap">Kode</th>
+              <th class="py-2.5 px-4 min-w-[180px]">Barang Rekondisi</th>
+              <th class="py-2.5 px-4 whitespace-nowrap">Tgl Selesai</th>
+              <th class="py-2.5 px-4 text-center whitespace-nowrap">Qty</th>
+              <th class="py-2.5 px-4 min-w-[150px]">Remark</th>
             </tr>
-          `).join('')}
-        </tbody>
-      </table>
+          </thead>
+          <tbody class="divide-y divide-slate-800/80">
+            ${pres.map(p => `
+              <tr>
+                <td class="py-2.5 px-4 font-mono text-teal-400 whitespace-nowrap">${p.item_code || '-'}</td>
+                <td class="py-2.5 px-4 font-bold text-white">${escapeHtml(p.item_name)}</td>
+                <td class="py-2.5 px-4 font-mono text-slate-400 whitespace-nowrap">${p.date_repaired}</td>
+                <td class="py-2.5 px-4 text-center font-mono font-bold whitespace-nowrap">${p.quantity}</td>
+                <td class="py-2.5 px-4 text-slate-400">${escapeHtml(p.remark || '-')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
     `;
   }
 }
@@ -2067,7 +2284,7 @@ function exportInventoryExcel() {
   if (!XLSX) return;
 
   const data = [
-    ['HOTEL IT INVENTORY MANAGEMENT - MASTER CATALOG & STOCK REPORT'],
+    ['RATTAN-INN HOTEL IT INVENTORY MANAGEMENT - MASTER CATALOG & STOCK REPORT'],
     [`Generated: ${new Date().toLocaleString()} | User: ${currentUser ? currentUser.email : 'System'}`],
     [],
     ['No', 'Item Code', 'Item Name', 'Category', 'Total Inbound', 'Total Transferred', 'Total Returned', 'Available Stock in IT', 'Status', 'Remark']
@@ -2100,7 +2317,7 @@ function exportInventoryExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Inventory Stock');
 
-  const filename = `Hotel_IT_Inventory_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+  const filename = `Rattan_Inn_Hotel_IT_Inventory_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
   XLSX.writeFile(wb, filename);
   showToast(`File "${filename}" berhasil didownload!`, 'success');
 }
@@ -2110,7 +2327,7 @@ function exportDepartmentalExcel() {
   if (!XLSX) return;
 
   const data = [
-    ['HOTEL IT INVENTORY - 9 DEPARTMENTS ASSET HOLDINGS REPORT'],
+    ['RATTAN-INN HOTEL IT INVENTORY - 9 DEPARTMENTS ASSET HOLDINGS REPORT'],
     [`Generated: ${new Date().toLocaleString()}`],
     [],
     ['No', 'Department', 'Item Name', 'Category', 'Held Units', 'Total Received', 'Total Returned', 'Last Recipient / PIC', 'Last Movement Date']
@@ -2150,7 +2367,7 @@ function exportDepartmentalExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Departmental Assets');
 
-  const filename = `Hotel_IT_Departmental_Assets_${new Date().toISOString().split('T')[0]}.xlsx`;
+  const filename = `Rattan_Inn_Hotel_IT_Departmental_Assets_${new Date().toISOString().split('T')[0]}.xlsx`;
   XLSX.writeFile(wb, filename);
   showToast(`File "${filename}" berhasil didownload!`, 'success');
 }
@@ -2160,7 +2377,7 @@ function exportMotionExcel() {
   if (!XLSX) return;
 
   const data = [
-    ['HOTEL IT INVENTORY - MOTION AUDIT TRAIL LOG'],
+    ['RATTAN-INN HOTEL IT INVENTORY - MOTION AUDIT TRAIL LOG'],
     [`Generated: ${new Date().toLocaleString()}`],
     [],
     ['No', 'Date', 'Hardware Item', 'Category', 'Movement Type', 'Department', 'Quantity', 'Recipient / PIC', 'Remark', 'Recorded By']
@@ -2191,7 +2408,7 @@ function exportMotionExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Motion Log');
 
-  const filename = `Hotel_IT_MotionLog_${new Date().toISOString().split('T')[0]}.xlsx`;
+  const filename = `Rattan_Inn_Hotel_IT_MotionLog_${new Date().toISOString().split('T')[0]}.xlsx`;
   XLSX.writeFile(wb, filename);
   showToast(`File "${filename}" berhasil didownload!`, 'success');
 }
@@ -2201,7 +2418,7 @@ function exportPurchaseOrdersExcel() {
   if (!XLSX) return;
 
   const data = [
-    ['HOTEL IT PROCUREMENT - PURCHASE ORDERS REPORT'],
+    ['RATTAN-INN HOTEL IT PROCUREMENT - PURCHASE ORDERS REPORT'],
     [`Generated: ${new Date().toLocaleString()}`],
     [],
     ['No', 'PO Number', 'Item Name', 'Category', 'Order Date', 'Arrival Date', 'Qty', 'For Use / Allocation', 'Vendor', 'Status', 'Remarks']
@@ -2232,7 +2449,7 @@ function exportPurchaseOrdersExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Purchase Orders');
 
-  const filename = `Hotel_IT_Purchase_Orders_${new Date().toISOString().split('T')[0]}.xlsx`;
+  const filename = `Rattan_Inn_Hotel_IT_Purchase_Orders_${new Date().toISOString().split('T')[0]}.xlsx`;
   XLSX.writeFile(wb, filename);
   showToast(`File "${filename}" berhasil didownload!`, 'success');
 }
@@ -2242,7 +2459,7 @@ function exportPrelovedExcel() {
   if (!XLSX) return;
 
   const data = [
-    ['HOTEL IT INVENTORY - DAMAGED HARDWARE & REFURBISHED ITEMS'],
+    ['RATTAN-INN HOTEL IT INVENTORY - DAMAGED HARDWARE & REFURBISHED ITEMS'],
     [`Generated: ${new Date().toLocaleString()}`],
     [],
     ['No', 'Item Code', 'Item Name', 'Category', 'Date Repaired', 'Qty', 'Serial Number', 'Remark / Ex-Location']
@@ -2270,7 +2487,7 @@ function exportPrelovedExcel() {
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Damaged Hardware');
 
-  const filename = `Hotel_IT_Damaged_Hardware_${new Date().toISOString().split('T')[0]}.xlsx`;
+  const filename = `Rattan_Inn_Hotel_IT_Damaged_Hardware_${new Date().toISOString().split('T')[0]}.xlsx`;
   XLSX.writeFile(wb, filename);
   showToast(`File "${filename}" berhasil didownload!`, 'success');
 }
@@ -2286,7 +2503,7 @@ function exportSelectedMonthlyExcel() {
 
   const inbounds = state.stockTransactions.filter(t => t.transaction_date && t.transaction_date.startsWith(ym));
   const inData = [
-    [`HOTEL IT MONTHLY INBOUND STOCK - ${ym}`],
+    [`RATTAN-INN HOTEL IT MONTHLY INBOUND STOCK - ${ym}`],
     [],
     ['No', 'Date', 'Item Name', 'Category', 'Quantity In', 'Remark']
   ];
@@ -2298,7 +2515,7 @@ function exportSelectedMonthlyExcel() {
 
   const movs = state.departmentMovements.filter(m => m.date && m.date.startsWith(ym));
   const movData = [
-    [`HOTEL IT MONTHLY DEPARTMENT MOVEMENTS - ${ym}`],
+    [`RATTAN-INN HOTEL IT MONTHLY DEPARTMENT MOVEMENTS - ${ym}`],
     [],
     ['No', 'Date', 'Item Name', 'Department', 'Type', 'Quantity', 'Recipient / PIC', 'Remark']
   ];
@@ -2308,7 +2525,7 @@ function exportSelectedMonthlyExcel() {
   });
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(movData), 'Monthly Movements');
 
-  const filename = `Hotel_IT_Monthly_Report_${ym}.xlsx`;
+  const filename = `Rattan_Inn_Hotel_IT_Monthly_Report_${ym}.xlsx`;
   XLSX.writeFile(wb, filename);
   showToast(`Laporan bulanan ${ym} berhasil didownload!`, 'success');
 }
@@ -2320,7 +2537,7 @@ function exportFullBackupExcel() {
   const wb = XLSX.utils.book_new();
 
   const invData = [
-    ['HOTEL IT MASTER INVENTORY CATALOG & AVAILABLE STOCK'],
+    ['RATTAN-INN HOTEL IT MASTER INVENTORY CATALOG & AVAILABLE STOCK'],
     [`Generated: ${new Date().toISOString()}`],
     [],
     ['No', 'Item Code', 'Item Name', 'Category', 'Total Inbound', 'Transferred to Depts', 'Returned to IT', 'Available in IT Storage', 'Remark']
@@ -2670,6 +2887,7 @@ window.setMonthlyTab = setMonthlyTab;
 window.handleMonthlyChange = handleMonthlyChange;
 window.renderInventoryTable = renderInventoryTable;
 window.renderDepartmentalView = renderDepartmentalView;
+window.state = state;
 window.renderMotionTable = renderMotionTable;
 window.renderPOTable = renderPOTable;
 window.renderPrelovedTable = renderPrelovedTable;
@@ -2719,11 +2937,14 @@ window.copySchemaSQL = copySchemaSQL;
 window.toggleMobileSidebar = toggleMobileSidebar;
 window.updateHeroGreeting = updateHeroGreeting;
 window.getGreetingPrefix = getGreetingPrefix;
+window.startRealTimeDeviceClock = startRealTimeDeviceClock;
+window.setupSupabaseRealtime = setupSupabaseRealtime;
 
 // ==============================================================================
 // 21. EVENT LISTENERS & APPLICATION BOOTSTRAP
 // ==============================================================================
 document.addEventListener('DOMContentLoaded', () => {
+  startRealTimeDeviceClock();
   initSupabaseClient();
   initSettingsForm();
   initMonthlyView();
