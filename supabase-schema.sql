@@ -38,13 +38,14 @@ CREATE INDEX idx_master_items_category ON public.master_items(category);
 CREATE INDEX idx_master_items_name ON public.master_items(item_name);
 
 -- ==============================================================================
--- 4. TABLE: stock_transactions (Transaksi Inbound Stok / Penambahan Unit)
+-- 4. TABLE: stock_transactions (Transaksi Inbound & Pengurangan Unit Stok IT)
 -- ==============================================================================
 CREATE TABLE public.stock_transactions (
   id TEXT PRIMARY KEY,
   item_id TEXT NOT NULL REFERENCES public.master_items(id) ON DELETE CASCADE,
   transaction_date DATE NOT NULL DEFAULT CURRENT_DATE,
   quantity INTEGER NOT NULL CHECK (quantity > 0),
+  type TEXT NOT NULL DEFAULT 'INBOUND' CHECK (type IN ('INBOUND', 'REDUCTION')),
   remark TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
   created_by TEXT NOT NULL DEFAULT 'IT Team'
@@ -52,6 +53,7 @@ CREATE TABLE public.stock_transactions (
 
 CREATE INDEX idx_stock_trans_item_id ON public.stock_transactions(item_id);
 CREATE INDEX idx_stock_trans_date ON public.stock_transactions(transaction_date);
+CREATE INDEX idx_stock_trans_type ON public.stock_transactions(type);
 
 -- ==============================================================================
 -- 5. TABLE: department_movements (Mutasi Transfer & Pengembalian Departemen)
@@ -251,3 +253,13 @@ ON CONFLICT (id) DO NOTHING;
 -- SCHEMA MIGRATION COMPLETED SUCCESSFULLY
 -- Zero RLS is configured. Tables are fully accessible via Supabase Client SDK.
 -- ==============================================================================
+
+-- ==============================================================================
+-- MIGRATION SCRIPT FOR EXISTING DATABASE (Run if upgrading from older schema)
+-- ==============================================================================
+-- Add 'type' column to stock_transactions for Unit Reduction (-) support
+ALTER TABLE public.stock_transactions ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'INBOUND';
+ALTER TABLE public.stock_transactions DROP CONSTRAINT IF EXISTS stock_transactions_type_check;
+ALTER TABLE public.stock_transactions ADD CONSTRAINT stock_transactions_type_check CHECK (type IN ('INBOUND', 'REDUCTION'));
+CREATE INDEX IF NOT EXISTS idx_stock_trans_type ON public.stock_transactions(type);
+

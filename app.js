@@ -593,14 +593,31 @@ function logActivity(itemName, category, action, type = 'INVENTORY') {
   }
 }
 
+// Helper to detect if a stock transaction is a unit reduction
+function isReductionTx(tx) {
+  if (!tx) return false;
+  if (tx.type === 'REDUCTION') return true;
+  if (typeof tx.remark === 'string' && (
+    tx.remark.startsWith('[PENGURANGAN') ||
+    tx.remark.startsWith('[REDUCTION') ||
+    tx.remark.toLowerCase().includes('pengurangan stok')
+  )) {
+    return true;
+  }
+  return false;
+}
+
 // ==============================================================================
 // 5. INVARIANT STOCK ENGINE
-// Available = Total Inbound - Transferred to Depts + Returned to Inventory
+// Available = Total Inbound - Total Reduced - Transferred to Depts + Returned to Inventory
 // Dept Held = Received - Returned
 // ==============================================================================
 function calculateStockMetrics(itemId) {
-  const inbounds = state.stockTransactions.filter(t => t.item_id === itemId);
+  const inbounds = state.stockTransactions.filter(t => t.item_id === itemId && !isReductionTx(t));
   const totalInbound = inbounds.reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
+
+  const reductions = state.stockTransactions.filter(t => t.item_id === itemId && isReductionTx(t));
+  const totalReduced = reductions.reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
 
   const transfers = state.departmentMovements.filter(m => m.item_id === itemId && m.type === 'TRANSFER_TO_DEPARTMENT');
   const totalTransferred = transfers.reduce((sum, m) => sum + (Number(m.quantity) || 0), 0);
@@ -608,11 +625,12 @@ function calculateStockMetrics(itemId) {
   const returns = state.departmentMovements.filter(m => m.item_id === itemId && m.type === 'RETURN_TO_INVENTORY');
   const totalReturned = returns.reduce((sum, m) => sum + (Number(m.quantity) || 0), 0);
 
-  const availableStock = Math.max(0, totalInbound - totalTransferred + totalReturned);
+  const availableStock = Math.max(0, totalInbound - totalReduced - totalTransferred + totalReturned);
   const totalHeldByDepts = Math.max(0, totalTransferred - totalReturned);
 
   return {
     totalInbound,
+    totalReduced,
     totalTransferred,
     totalReturned,
     availableStock,
@@ -662,7 +680,7 @@ function updateHeroGreeting() {
   const heroTitle = document.getElementById('hero-greeting-title');
   if (heroTitle) {
     const name = getGreetingPrefix(currentUser?.email);
-    heroTitle.textContent = `Halo ${name}! Aktivitas apa yang ingin dilakukan?😃`;
+    heroTitle.textContent = `Welcome ${name}! What are we diving into today?😉`;
   }
 }
 
@@ -872,6 +890,7 @@ function renderDashboard() {
         if (a.action === 'Transfer') { icon = 'fa-share-from-square'; color = 'text-amber-400'; }
         if (a.action === 'Return') { icon = 'fa-arrow-rotate-left'; color = 'text-emerald-400'; }
         if (a.action === 'Received') { icon = 'fa-file-invoice'; color = 'text-blue-400'; }
+        if (a.action === 'Reduced') { icon = 'fa-circle-minus'; color = 'text-rose-400'; }
 
         const dateStr = a.timestamp ? new Date(a.timestamp).toLocaleDateString('en-GB') : '';
 
@@ -992,16 +1011,24 @@ function renderInventoryTable() {
             <button
               type="button"
               onclick="openModalInbound('${item.id}')"
-              title="Add Inbound Stock"
+              title="Add Inbound Stock (+)"
               class="p-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white transition text-xs shrink-0"
             >
               <i class="fa-solid fa-plus"></i>
             </button>
             <button
               type="button"
+              onclick="openModalReduceStock('${item.id}')"
+              title="Kurangi Stok Unit (-)"
+              class="p-1.5 rounded-lg bg-rose-500/20 hover:bg-rose-600 text-rose-300 hover:text-white transition text-xs border border-rose-500/30 shrink-0"
+            >
+              <i class="fa-solid fa-minus"></i>
+            </button>
+            <button
+              type="button"
               onclick="confirmDeleteMasterItem('${item.id}', '${escapeHtml(item.item_name)}')"
               title="Delete Item"
-              class="p-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white transition text-xs shrink-0"
+              class="p-1.5 rounded-lg bg-slate-800 hover:bg-rose-600 text-slate-400 hover:text-white transition text-xs shrink-0"
             >
               <i class="fa-solid fa-trash"></i>
             </button>
@@ -1258,7 +1285,7 @@ function closeModal(modalId) {
   document.getElementById(modalId)?.classList.add('hidden');
 }
 
-// Item Inbound Stock History Modal Logic
+// Item Stock History Modal Logic (Inbound & Pengurangan Unit)
 let currentHistoryItemId = null;
 
 function openItemInboundHistoryModal(itemId) {
@@ -1278,19 +1305,22 @@ function openItemInboundHistoryModal(itemId) {
   if (codeBadge) codeBadge.textContent = item.item_code || 'SKU-GEN';
   if (subtitle) subtitle.textContent = `Katalog IT: ${item.item_code || '-'} | Kategori: ${item.category}`;
 
-  // Filter inbound transactions for this item
+  // Filter all stock transactions (inbound & reductions) for this item
   const txs = state.stockTransactions
     .filter(t => t.item_id === itemId)
     .sort((a, b) => new Date(b.transaction_date || 0) - new Date(a.transaction_date || 0));
 
-  const totalIn = txs.reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
+  const totalIn = txs.filter(t => !isReductionTx(t)).reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
+  const totalReduced = txs.filter(t => isReductionTx(t)).reduce((sum, t) => sum + (Number(t.quantity) || 0), 0);
   const metrics = calculateStockMetrics(itemId);
 
   const totalInEl = document.getElementById('modal-hist-total-in');
+  const totalReducedEl = document.getElementById('modal-hist-total-reduced');
   const countEl = document.getElementById('modal-hist-tx-count');
   const activeStockEl = document.getElementById('modal-hist-active-stock');
 
   if (totalInEl) totalInEl.textContent = `${totalIn} unit`;
+  if (totalReducedEl) totalReducedEl.textContent = `${totalReduced} unit`;
   if (countEl) countEl.textContent = `${txs.length} kali`;
   if (activeStockEl) activeStockEl.textContent = `${metrics.availableStock} unit`;
 
@@ -1303,15 +1333,31 @@ function openItemInboundHistoryModal(itemId) {
       empty?.classList.remove('hidden');
     } else {
       empty?.classList.add('hidden');
-      tbody.innerHTML = txs.map((tx, idx) => `
-        <tr class="hover:bg-slate-900/60 transition">
-          <td class="py-2.5 px-3 text-center font-mono text-slate-500">${idx + 1}</td>
-          <td class="py-2.5 px-3 font-mono text-slate-300 whitespace-nowrap">${tx.transaction_date || '-'}</td>
-          <td class="py-2.5 px-3 text-center font-mono font-bold text-cyan-400 whitespace-nowrap">+${tx.quantity}</td>
-          <td class="py-2.5 px-4 text-slate-300">${escapeHtml(tx.remark || '-')}</td>
-          <td class="py-2.5 px-3 font-mono text-[11px] text-slate-400 whitespace-nowrap">${escapeHtml(tx.created_by || 'IT Staff')}</td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = txs.map((tx, idx) => {
+        const isRed = isReductionTx(tx);
+        const typeBadge = isRed
+          ? `<span class="badge-pill px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30 whitespace-nowrap"><i class="fa-solid fa-minus text-[9px] mr-1"></i>Pengurangan</span>`
+          : `<span class="badge-pill px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 whitespace-nowrap"><i class="fa-solid fa-plus text-[9px] mr-1"></i>Stok Masuk</span>`;
+        const qtyDisplay = isRed
+          ? `<span class="font-bold text-rose-400 font-mono">-${tx.quantity}</span>`
+          : `<span class="font-bold text-cyan-400 font-mono">+${tx.quantity}</span>`;
+
+        let displayRemark = escapeHtml(tx.remark || '-');
+        if (displayRemark.startsWith('[PENGURANGAN STOK]')) {
+          displayRemark = displayRemark.replace('[PENGURANGAN STOK]', '<span class="text-rose-400 font-semibold">[PENGURANGAN]</span>');
+        }
+
+        return `
+          <tr class="hover:bg-slate-900/60 transition ${isRed ? 'bg-rose-950/10' : ''}">
+            <td class="py-2.5 px-3 text-center font-mono text-slate-500">${idx + 1}</td>
+            <td class="py-2.5 px-3 font-mono text-slate-300 whitespace-nowrap">${tx.transaction_date || '-'}</td>
+            <td class="py-2.5 px-3 whitespace-nowrap">${typeBadge}</td>
+            <td class="py-2.5 px-3 text-center font-mono whitespace-nowrap">${qtyDisplay}</td>
+            <td class="py-2.5 px-4 text-slate-300">${displayRemark}</td>
+            <td class="py-2.5 px-3 font-mono text-[11px] text-slate-400 whitespace-nowrap">${escapeHtml(tx.created_by || 'IT Staff')}</td>
+          </tr>
+        `;
+      }).join('');
     }
   }
 
@@ -1322,6 +1368,214 @@ function openInboundForCurrentItem() {
   if (!currentHistoryItemId) return;
   closeModal('modal-item-inbound-history');
   openModalInbound(currentHistoryItemId);
+}
+
+function openReduceForCurrentItem() {
+  if (!currentHistoryItemId) return;
+  closeModal('modal-item-inbound-history');
+  openModalReduceStock(currentHistoryItemId);
+}
+
+// ==============================================================================
+// 11B. STOCK REDUCTION WORKFLOW (TWO-STEP CONFIRMATION)
+// ==============================================================================
+let currentReduceItem = null;
+let currentReducePendingData = null;
+
+function openModalReduceStock(itemId) {
+  const item = state.masterItems.find(i => i.id === itemId);
+  if (!item) return;
+
+  const { availableStock } = calculateStockMetrics(itemId);
+  if (availableStock <= 0) {
+    showToast(`Stok untuk "${item.item_name}" sudah 0. Tidak ada unit yang dapat dikurangi!`, 'warning');
+    return;
+  }
+
+  currentReduceItem = item;
+  currentReducePendingData = null;
+
+  // Populate overview elements
+  const catEl = document.getElementById('reduce-item-cat');
+  const codeEl = document.getElementById('reduce-item-code');
+  const nameEl = document.getElementById('reduce-item-name');
+  const stockEl = document.getElementById('reduce-current-stock-badge');
+  const itemIdInput = document.getElementById('reduce-item-id');
+  const qtyInput = document.getElementById('reduce-qty');
+  const qtyHint = document.getElementById('reduce-qty-hint');
+  const reasonInput = document.getElementById('reduce-reason');
+  const dateInput = document.getElementById('reduce-date');
+
+  if (catEl) catEl.textContent = item.category;
+  if (codeEl) codeEl.textContent = item.item_code || 'SKU-GEN';
+  if (nameEl) nameEl.textContent = item.item_name;
+  if (stockEl) stockEl.textContent = `${availableStock} unit`;
+  if (itemIdInput) itemIdInput.value = itemId;
+
+  if (qtyInput) {
+    qtyInput.value = '1';
+    qtyInput.max = String(availableStock);
+  }
+  if (qtyHint) {
+    qtyHint.textContent = `Maksimal unit yang dapat dikurangi: ${availableStock} unit`;
+  }
+  if (reasonInput) reasonInput.value = '';
+  if (dateInput) dateInput.value = new Date().toISOString().split('T')[0];
+
+  // Reset to Step 1 view
+  document.getElementById('reduce-step-1')?.classList.remove('hidden');
+  document.getElementById('reduce-step-2')?.classList.add('hidden');
+  const chk = document.getElementById('reduce-confirm-checkbox');
+  if (chk) chk.checked = false;
+  const btnExec = document.getElementById('btn-execute-reduce');
+  if (btnExec) btnExec.disabled = true;
+
+  openModal('modal-reduce-stock');
+}
+
+function setReduceReason(reasonText) {
+  const reasonInput = document.getElementById('reduce-reason');
+  if (reasonInput) {
+    reasonInput.value = reasonText;
+    reasonInput.focus();
+  }
+}
+
+function proceedToReduceConfirmStep() {
+  if (!currentReduceItem) return;
+
+  const qtyInput = document.getElementById('reduce-qty');
+  const reasonInput = document.getElementById('reduce-reason');
+  const dateInput = document.getElementById('reduce-date');
+
+  const qty = parseInt(qtyInput ? qtyInput.value : '0', 10);
+  const reason = reasonInput ? reasonInput.value.trim() : '';
+  const date = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
+
+  const { availableStock } = calculateStockMetrics(currentReduceItem.id);
+
+  if (isNaN(qty) || qty <= 0) {
+    showToast('Masukkan jumlah unit pengurangan yang valid (minimal 1 unit)!', 'error');
+    qtyInput?.focus();
+    return;
+  }
+
+  if (qty > availableStock) {
+    showToast(`Jumlah pengurangan (${qty}) melebihi stok yang tersedia (${availableStock} unit)!`, 'error');
+    qtyInput?.focus();
+    return;
+  }
+
+  if (!reason) {
+    showToast('Alasan pengurangan unit wajib diisi!', 'error');
+    reasonInput?.focus();
+    return;
+  }
+
+  currentReducePendingData = {
+    itemId: currentReduceItem.id,
+    itemName: currentReduceItem.item_name,
+    category: currentReduceItem.category,
+    currentStock: availableStock,
+    reduceQty: qty,
+    remainingStock: availableStock - qty,
+    reason: reason,
+    date: date,
+    user: currentUser ? currentUser.email : 'admin@hotel.com'
+  };
+
+  // Populate Step 2 Confirmation Screen
+  const confirmItemName = document.getElementById('confirm-item-name');
+  const confirmCurrentStock = document.getElementById('confirm-current-stock');
+  const confirmReduceQty = document.getElementById('confirm-reduce-qty');
+  const confirmRemainingStock = document.getElementById('confirm-remaining-stock');
+  const confirmReason = document.getElementById('confirm-reason');
+  const confirmUser = document.getElementById('confirm-user');
+
+  if (confirmItemName) confirmItemName.textContent = currentReducePendingData.itemName;
+  if (confirmCurrentStock) confirmCurrentStock.textContent = `${currentReducePendingData.currentStock} unit`;
+  if (confirmReduceQty) confirmReduceQty.textContent = `-${currentReducePendingData.reduceQty} unit`;
+  if (confirmRemainingStock) {
+    confirmRemainingStock.textContent = `${currentReducePendingData.remainingStock} unit`;
+    confirmRemainingStock.className = currentReducePendingData.remainingStock === 0
+      ? 'font-mono font-bold text-rose-400 text-sm'
+      : 'font-mono font-bold text-emerald-400 text-sm';
+  }
+  if (confirmReason) confirmReason.textContent = currentReducePendingData.reason;
+  if (confirmUser) confirmUser.textContent = currentReducePendingData.user;
+
+  // Uncheck acknowledgment checkbox and disable submit button initially
+  const chk = document.getElementById('reduce-confirm-checkbox');
+  if (chk) chk.checked = false;
+  const btnExec = document.getElementById('btn-execute-reduce');
+  if (btnExec) btnExec.disabled = true;
+
+  // Transition to Step 2
+  document.getElementById('reduce-step-1')?.classList.add('hidden');
+  document.getElementById('reduce-step-2')?.classList.remove('hidden');
+}
+
+function backToReduceStep1() {
+  document.getElementById('reduce-step-2')?.classList.add('hidden');
+  document.getElementById('reduce-step-1')?.classList.remove('hidden');
+}
+
+function toggleReduceConfirmButton() {
+  const chk = document.getElementById('reduce-confirm-checkbox');
+  const btn = document.getElementById('btn-execute-reduce');
+  if (btn) {
+    btn.disabled = !(chk && chk.checked);
+  }
+}
+
+async function executeReduceStock() {
+  if (!currentReducePendingData) return;
+
+  const { itemId, itemName, category, reduceQty, reason, date, user } = currentReducePendingData;
+
+  const newTx = {
+    id: `tx-${Date.now()}`,
+    item_id: itemId,
+    transaction_date: date,
+    quantity: reduceQty,
+    type: 'REDUCTION',
+    remark: `[PENGURANGAN STOK] ${reason}`,
+    created_by: user,
+    created_at: new Date().toISOString()
+  };
+
+  if (isLiveSupabase && supabaseClient) {
+    try {
+      const { error } = await supabaseClient.from('stock_transactions').insert(newTx);
+      if (error) {
+        if (error.code === 'PGRST204' || error.code === '42703' || (error.message && error.message.includes('column'))) {
+          // 'type' column does not exist on remote schema yet; insert without 'type'
+          const fallbackTx = { ...newTx };
+          delete fallbackTx.type;
+          const retryRes = await supabaseClient.from('stock_transactions').insert(fallbackTx);
+          if (retryRes.error) {
+            console.warn('Fallback stock reduction insert error:', retryRes.error);
+          }
+        } else {
+          console.warn('Stock reduction insert error:', error);
+        }
+      }
+    } catch (e) {
+      console.warn('Supabase stock reduction exception:', e);
+    }
+  }
+
+  state.stockTransactions.unshift(newTx);
+  logActivity(`${itemName} (-${reduceQty} units: ${reason})`, category, 'Reduced', 'INVENTORY');
+  persistState();
+
+  closeModal('modal-reduce-stock');
+  showToast(`Pengurangan stok berhasil! ${itemName} berkurang ${reduceQty} unit.`, 'success');
+
+  // If history modal was open for this item, refresh it
+  if (currentHistoryItemId === itemId) {
+    openItemInboundHistoryModal(itemId);
+  }
 }
 
 // Inbound Modal
@@ -2287,11 +2541,11 @@ function exportInventoryExcel() {
     ['RATTAN-INN HOTEL IT INVENTORY MANAGEMENT - MASTER CATALOG & STOCK REPORT'],
     [`Generated: ${new Date().toLocaleString()} | User: ${currentUser ? currentUser.email : 'System'}`],
     [],
-    ['No', 'Item Code', 'Item Name', 'Category', 'Total Inbound', 'Total Transferred', 'Total Returned', 'Available Stock in IT', 'Status', 'Remark']
+    ['No', 'Item Code', 'Item Name', 'Category', 'Total Inbound', 'Total Reduced', 'Total Transferred', 'Total Returned', 'Available Stock in IT', 'Status', 'Remark']
   ];
 
   state.masterItems.forEach((item, index) => {
-    const { totalInbound, totalTransferred, totalReturned, availableStock } = calculateStockMetrics(item.id);
+    const { totalInbound, totalReduced, totalTransferred, totalReturned, availableStock } = calculateStockMetrics(item.id);
     const status = availableStock === 0 ? 'OUT OF STOCK' : availableStock <= 2 ? 'LOW STOCK' : 'AVAILABLE';
 
     data.push([
@@ -2300,6 +2554,7 @@ function exportInventoryExcel() {
       item.item_name,
       item.category,
       totalInbound,
+      totalReduced,
       totalTransferred,
       totalReturned,
       availableStock,
@@ -2310,7 +2565,7 @@ function exportInventoryExcel() {
 
   const ws = XLSX.utils.aoa_to_sheet(data);
   ws['!cols'] = [
-    { wch: 6 }, { wch: 14 }, { wch: 40 }, { wch: 18 }, { wch: 14 },
+    { wch: 6 }, { wch: 14 }, { wch: 40 }, { wch: 18 }, { wch: 14 }, { wch: 14 },
     { wch: 16 }, { wch: 16 }, { wch: 20 }, { wch: 16 }, { wch: 45 }
   ];
 
@@ -2798,13 +3053,18 @@ function reloadDemoDataSeed() {
 }
 
 function copySchemaSQL() {
-  const sql = `-- HOTEL IT INVENTORY MANAGEMENT - ZERO-RLS SCHEMA
+  const sql = `-- HOTEL IT INVENTORY MANAGEMENT - ZERO-RLS SCHEMA & MIGRATION
 ALTER TABLE public.master_items DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stock_transactions DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.department_movements DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.purchase_orders DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.preloved DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;`;
+ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;
+
+-- Pengurangan Unit Stok (Stock Reduction Support)
+ALTER TABLE public.stock_transactions ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'INBOUND';
+ALTER TABLE public.stock_transactions DROP CONSTRAINT IF EXISTS stock_transactions_type_check;
+ALTER TABLE public.stock_transactions ADD CONSTRAINT stock_transactions_type_check CHECK (type IN ('INBOUND', 'REDUCTION'));`;
 
   navigator.clipboard.writeText(sql).then(() => {
     showToast('Ringkasan SQL Schema berhasil disalin ke clipboard!', 'success');
@@ -2905,6 +3165,14 @@ window.openModalTransfer = openModalTransfer;
 window.openModalReturn = openModalReturn;
 window.openModalPO = openModalPO;
 window.openModalPreloved = openModalPreloved;
+window.openModalReduceStock = openModalReduceStock;
+window.setReduceReason = setReduceReason;
+window.proceedToReduceConfirmStep = proceedToReduceConfirmStep;
+window.backToReduceStep1 = backToReduceStep1;
+window.toggleReduceConfirmButton = toggleReduceConfirmButton;
+window.executeReduceStock = executeReduceStock;
+window.openReduceForCurrentItem = openReduceForCurrentItem;
+
 window.openLightbox = openLightbox;
 
 window.updateTransferAvailableStock = updateTransferAvailableStock;

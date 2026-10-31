@@ -486,7 +486,7 @@
                 </div>
 
                 <h2 id="hero-greeting-title" class="text-xl sm:text-2xl md:text-3xl font-extrabold text-white tracking-tight leading-snug">
-                  Halo Admin! Aktivitas apa yang ingin dilakukan?😉
+                  Welcome Admin! What are we diving into today?😉
                 </h2>
                 <p class="text-xs sm:text-sm text-slate-400 mt-2 leading-relaxed">
                   Single-source-of-truth for hotel IT infrastructure. Direct sync with Supabase BaaS and client-side SheetJS exports.
@@ -1732,39 +1732,44 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
             <span id="modal-hist-code-badge" class="text-xs font-mono text-cyan-400 font-semibold">SKU-000</span>
           </div>
           <h3 id="modal-hist-item-name" class="text-lg font-bold text-white mt-1">Nama Barang</h3>
-          <p id="modal-hist-subtitle" class="text-xs text-slate-400 mt-0.5">Histori transaksi stok masuk (Inbound) untuk barang ini</p>
+          <p id="modal-hist-subtitle" class="text-xs text-slate-400 mt-0.5">Histori transaksi stok masuk dan pengurangan unit untuk barang ini</p>
         </div>
         <button type="button" onclick="closeModal('modal-item-inbound-history')" class="text-slate-400 hover:text-white p-1">
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
       </div>
 
-      <!-- Quick Metrics Summary -->
-      <div class="grid grid-cols-3 gap-3 my-4">
+      <!-- Quick Metrics Summary (4 Cards) -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 my-4">
         <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
-          <div class="text-[11px] font-medium text-slate-400 uppercase">Total Masuk</div>
-          <div id="modal-hist-total-in" class="text-xl font-bold font-mono text-cyan-400 mt-0.5">0</div>
+          <div class="text-[10px] font-medium text-slate-400 uppercase">Total Masuk</div>
+          <div id="modal-hist-total-in" class="text-lg font-bold font-mono text-cyan-400 mt-0.5">0</div>
         </div>
         <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
-          <div class="text-[11px] font-medium text-slate-400 uppercase">Frekuensi Inbound</div>
-          <div id="modal-hist-tx-count" class="text-xl font-bold font-mono text-purple-400 mt-0.5">0</div>
+          <div class="text-[10px] font-medium text-slate-400 uppercase">Pengurangan</div>
+          <div id="modal-hist-total-reduced" class="text-lg font-bold font-mono text-rose-400 mt-0.5">0</div>
         </div>
         <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
-          <div class="text-[11px] font-medium text-slate-400 uppercase">Stok Aktif IT</div>
-          <div id="modal-hist-active-stock" class="text-xl font-bold font-mono text-emerald-400 mt-0.5">0</div>
+          <div class="text-[10px] font-medium text-slate-400 uppercase">Transaksi</div>
+          <div id="modal-hist-tx-count" class="text-lg font-bold font-mono text-purple-400 mt-0.5">0</div>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+          <div class="text-[10px] font-medium text-slate-400 uppercase">Stok Aktif IT</div>
+          <div id="modal-hist-active-stock" class="text-lg font-bold font-mono text-emerald-400 mt-0.5">0</div>
         </div>
       </div>
 
       <!-- History Table Container -->
       <div class="overflow-y-auto flex-1 border border-slate-800 rounded-xl overflow-hidden min-h-[180px]">
-        <table class="w-full text-left text-xs min-w-[550px]">
+        <table class="w-full text-left text-xs min-w-[580px]">
           <thead class="bg-slate-900/90 text-slate-400 uppercase text-[10px] font-semibold sticky top-0 border-b border-slate-800">
             <tr>
               <th class="py-2.5 px-3 w-10 text-center">No</th>
-              <th class="py-2.5 px-3 min-w-[100px] whitespace-nowrap">Tanggal Masuk</th>
-              <th class="py-2.5 px-3 text-center min-w-[90px] whitespace-nowrap">Jumlah Unit</th>
-              <th class="py-2.5 px-4 min-w-[180px]">Remark / Catatan</th>
-              <th class="py-2.5 px-3 min-w-[130px] whitespace-nowrap">Ditambahkan Oleh</th>
+              <th class="py-2.5 px-3 min-w-[95px] whitespace-nowrap">Tanggal</th>
+              <th class="py-2.5 px-3 min-w-[110px] whitespace-nowrap">Jenis</th>
+              <th class="py-2.5 px-3 text-center min-w-[85px] whitespace-nowrap">Jumlah Unit</th>
+              <th class="py-2.5 px-4 min-w-[180px]">Remark / Alasan</th>
+              <th class="py-2.5 px-3 min-w-[120px] whitespace-nowrap">Petugas IT</th>
             </tr>
           </thead>
           <tbody id="modal-hist-tbody" class="divide-y divide-slate-800/80 bg-slate-950/40">
@@ -1773,28 +1778,227 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
         </table>
         <div id="modal-hist-empty" class="hidden p-8 text-center text-slate-500">
           <i class="fa-solid fa-box-open text-2xl mb-1 text-slate-600"></i>
-          <p>Belum ada transaksi stok masuk yang tercatat untuk barang ini.</p>
+          <p>Belum ada transaksi stok masuk maupun pengurangan untuk barang ini.</p>
         </div>
       </div>
 
       <!-- Footer Actions -->
-      <div class="flex items-center justify-between pt-4 mt-4 border-t border-slate-800">
-        <button
-          type="button"
-          id="btn-modal-hist-inbound"
-          onclick="openInboundForCurrentItem()"
-          class="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold shadow-md transition flex items-center gap-2"
-        >
-          <i class="fa-solid fa-box-open"></i>
-          <span>+ Tambah Stok Masuk Untuk Barang Ini</span>
-        </button>
+      <div class="flex flex-wrap items-center justify-between gap-2 pt-4 mt-4 border-t border-slate-800">
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            id="btn-modal-hist-inbound"
+            onclick="openInboundForCurrentItem()"
+            class="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold shadow-md transition flex items-center gap-1.5"
+          >
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>+ Inbound</span>
+          </button>
+          <button
+            type="button"
+            id="btn-modal-hist-reduce"
+            onclick="openReduceForCurrentItem()"
+            class="px-3 py-1.5 rounded-xl bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-500/30 text-xs font-semibold shadow-md transition flex items-center gap-1.5"
+          >
+            <i class="fa-solid fa-minus text-xs"></i>
+            <span>- Kurangi Unit</span>
+          </button>
+        </div>
         <button
           type="button"
           onclick="closeModal('modal-item-inbound-history')"
-          class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"
+          class="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold transition"
         >
           Tutup
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Pengurangan Unit Stok (Stock Reduction with Two-Step Confirmation) -->
+  <div id="modal-reduce-stock" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel rounded-2xl max-w-lg w-full p-6 border border-slate-700 shadow-2xl relative overflow-hidden">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-circle-minus text-rose-400"></i>
+          <span>Pengurangan Unit Stok (Stock Reduction)</span>
+        </h3>
+        <button type="button" onclick="closeModal('modal-reduce-stock')" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Item Overview Card -->
+      <div class="mt-4 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between">
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span id="reduce-item-cat" class="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-500/10 text-brand-300 border border-brand-500/20">CATEGORY</span>
+            <span id="reduce-item-code" class="text-xs font-mono text-cyan-400 font-semibold">CODE</span>
+          </div>
+          <div id="reduce-item-name" class="font-bold text-white text-sm">Nama Barang</div>
+        </div>
+        <div class="text-right">
+          <div class="text-[10px] text-slate-400 uppercase font-semibold">Stok Tersedia Saat Ini</div>
+          <div id="reduce-current-stock-badge" class="text-lg font-mono font-bold text-emerald-400">0 unit</div>
+        </div>
+      </div>
+
+      <!-- STEP 1: Input Form -->
+      <div id="reduce-step-1" class="space-y-4 mt-4">
+        <input type="hidden" id="reduce-item-id">
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1" for="reduce-qty">
+            Jumlah Barang yang Ingin Dikurangi (Unit) <span class="text-rose-400">*</span>
+          </label>
+          <div class="relative">
+            <input
+              type="number"
+              id="reduce-qty"
+              required
+              min="1"
+              value="1"
+              class="w-full px-3 py-2.5 rounded-xl bg-slate-900 border border-slate-700 text-sm text-white font-mono font-bold focus:border-rose-500 focus:ring-1 focus:ring-rose-500 outline-none"
+              placeholder="Masukkan jumlah unit"
+            >
+            <span class="absolute right-3 top-2.5 text-xs text-slate-500 font-medium">Unit</span>
+          </div>
+          <div id="reduce-qty-hint" class="text-[11px] text-slate-400 mt-1">Maksimal pengurangan: 0 unit</div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1" for="reduce-reason">
+            Alasan Pengurangan <span class="text-rose-400">*</span>
+          </label>
+          <textarea
+            id="reduce-reason"
+            rows="2"
+            required
+            placeholder="Tuliskan alasan pengurangan secara spesifik..."
+            class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-rose-500 outline-none resize-none"
+          ></textarea>
+
+          <!-- Quick Reason Templates -->
+          <div class="flex flex-wrap gap-1.5 mt-2">
+            <button type="button" onclick="setReduceReason('Kerusakan Fisik / Rusak Total')" class="px-2 py-1 rounded-md text-[10px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+              Kerusakan Fisik
+            </button>
+            <button type="button" onclick="setReduceReason('Hilang / Selisih Audit Fisik')" class="px-2 py-1 rounded-md text-[10px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+              Selisih Audit
+            </button>
+            <button type="button" onclick="setReduceReason('Kadaluarsa / Obsolete / Scrap')" class="px-2 py-1 rounded-md text-[10px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+              Obsolete / Scrap
+            </button>
+            <button type="button" onclick="setReduceReason('Koreksi Input Data Stok')" class="px-2 py-1 rounded-md text-[10px] font-medium bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition">
+              Koreksi Input
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-400 mb-1" for="reduce-date">
+            Tanggal Pengurangan <span class="text-rose-400">*</span>
+          </label>
+          <input
+            type="date"
+            id="reduce-date"
+            required
+            class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white font-mono focus:border-rose-500 outline-none"
+          >
+        </div>
+
+        <!-- Step 1 Actions -->
+        <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+          <button type="button" onclick="closeModal('modal-reduce-stock')" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700">
+            Batal
+          </button>
+          <button
+            type="button"
+            onclick="proceedToReduceConfirmStep()"
+            class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-lg shadow-rose-600/30 transition flex items-center gap-2"
+          >
+            <span>Lanjut ke Verifikasi (Step 1/2)</span>
+            <i class="fa-solid fa-arrow-right text-xs"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP 2: Two-Step Confirmation Screen -->
+      <div id="reduce-step-2" class="hidden space-y-4 mt-4">
+        <!-- Warning Alert -->
+        <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-3">
+          <i class="fa-solid fa-triangle-exclamation text-amber-400 text-base mt-0.5 shrink-0"></i>
+          <div>
+            <div class="font-bold text-amber-200">Konfirmasi Dua Langkah (Final Step)</div>
+            <p class="text-[11px] text-amber-300/90 mt-0.5">
+              Mohon periksa kembali detail pengurangan unit di bawah. Stok yang dikurangi akan langsung dipotong dari total inventaris aktif Gudang IT dan dicatat di audit log.
+            </p>
+          </div>
+        </div>
+
+        <!-- Summary Review Table -->
+        <div class="rounded-xl border border-slate-800 bg-slate-900/80 p-3.5 space-y-2.5 text-xs">
+          <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+            <span class="text-slate-400">Barang:</span>
+            <span id="confirm-item-name" class="font-bold text-white text-right">-</span>
+          </div>
+          <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+            <span class="text-slate-400">Stok Saat Ini:</span>
+            <span id="confirm-current-stock" class="font-mono text-slate-300">0 unit</span>
+          </div>
+          <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+            <span class="text-rose-400 font-semibold">Jumlah Pengurangan:</span>
+            <span id="confirm-reduce-qty" class="font-mono font-bold text-rose-400 text-sm">-0 unit</span>
+          </div>
+          <div class="flex justify-between items-center pb-2 border-b border-slate-800">
+            <span class="text-slate-400">Estimasi Sisa Stok:</span>
+            <span id="confirm-remaining-stock" class="font-mono font-bold text-emerald-400 text-sm">0 unit</span>
+          </div>
+          <div class="flex justify-between items-start pb-2 border-b border-slate-800">
+            <span class="text-slate-400 shrink-0">Alasan:</span>
+            <span id="confirm-reason" class="text-slate-200 text-right max-w-[240px] break-words font-medium">-</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-slate-400">Petugas IT:</span>
+            <span id="confirm-user" class="font-mono text-[11px] text-cyan-400">-</span>
+          </div>
+        </div>
+
+        <!-- Mandatory Acknowledgment Checkbox -->
+        <label class="flex items-start gap-2.5 p-3 rounded-xl bg-slate-900/60 border border-slate-800 cursor-pointer hover:border-slate-700 transition">
+          <input
+            type="checkbox"
+            id="reduce-confirm-checkbox"
+            onchange="toggleReduceConfirmButton()"
+            class="mt-0.5 rounded bg-slate-800 border-slate-700 text-rose-600 focus:ring-rose-500 w-4 h-4 cursor-pointer"
+          >
+          <span class="text-xs text-slate-300 select-none">
+            Saya telah memverifikasi fisik barang dan menyetujui pengurangan unit ini secara resmi.
+          </span>
+        </label>
+
+        <!-- Step 2 Actions -->
+        <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+          <button
+            type="button"
+            onclick="backToReduceStep1()"
+            class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition flex items-center gap-1.5"
+          >
+            <i class="fa-solid fa-arrow-left text-xs"></i>
+            <span>Kembali</span>
+          </button>
+          <button
+            type="button"
+            id="btn-execute-reduce"
+            disabled
+            onclick="executeReduceStock()"
+            class="px-5 py-2.5 rounded-xl bg-rose-600 disabled:bg-slate-800 disabled:text-slate-500 disabled:cursor-not-allowed hover:bg-rose-500 text-white text-xs font-semibold shadow-lg shadow-rose-600/30 transition flex items-center gap-2"
+          >
+            <i class="fa-solid fa-circle-check"></i>
+            <span>Konfirmasi & Eksekusi Pengurangan</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
