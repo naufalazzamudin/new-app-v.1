@@ -662,7 +662,7 @@ function updateHeroGreeting() {
   const heroTitle = document.getElementById('hero-greeting-title');
   if (heroTitle) {
     const name = getGreetingPrefix(currentUser?.email);
-    heroTitle.textContent = `Welcome ${name}! What are we diving into today?😉`;
+    heroTitle.textContent = `Halo ${name}! Aktivitas apa yang ingin dilakukan?😃`;
   }
 }
 
