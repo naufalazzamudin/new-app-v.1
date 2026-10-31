@@ -29,8 +29,8 @@ const STORAGE_KEYS = {
 };
 
 // Default fallback Supabase credentials (from Redeploy Auth)
-const DEFAULT_SUPABASE_URL = 'https://ufcutuputdpnepuhcwaq.supabase.co';
-const DEFAULT_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmY3V0dXB1dGRwbmVwdWhjd2FxIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc5MzI0MjI1MywiZXhwIjoyMTA4ODE4MjUzfQ.skkTlQ0enTcK-DHMQVIsE0UpG7e6rubi9qGifGorZiM';
+const DEFAULT_SUPABASE_URL = 'https://yoursupabase.supabase.co';
+const DEFAULT_SUPABASE_KEY = '12345678';
 
 // Universal Anti-Wrap Badge Formatters (Guarantee Clean Single-Line Badges)
 function formatCategoryBadge(category) {
@@ -680,7 +680,7 @@ function updateHeroGreeting() {
   const heroTitle = document.getElementById('hero-greeting-title');
   if (heroTitle) {
     const name = getGreetingPrefix(currentUser?.email);
-    heroTitle.textContent = `Welcome ${name}! What are we diving into today?😉`;
+    heroTitle.textContent = `Halo ${name}! Aktivitas apa yang ingin anda lakukan?😉`;
   }
 }
 
@@ -1080,10 +1080,11 @@ function clearImagePreview(previewId, containerId) {
 
 async function handleCreateMasterItemSubmit(e) {
   e.preventDefault();
-
   const name = document.getElementById('create-item-name').value.trim();
   const category = document.getElementById('create-item-category').value;
   const remark = document.getElementById('create-item-remark').value.trim();
+  const fileInput = document.getElementById('create-item-file'); // Input file fisik
+  const urlInput = document.getElementById('create-item-url').value.trim();
 
   if (!name || !category) {
     showToast('Nama Barang dan Kategori wajib diisi!', 'error');
@@ -1092,14 +1093,55 @@ async function handleCreateMasterItemSubmit(e) {
 
   const prefix = category === 'PC ITEMS' ? 'PC' : category === 'NETWORK ITEMS' ? 'NET' : category === 'LOCK SYSTEM' ? 'LCK' : 'CCTV';
   const randomCode = `${prefix}-${Math.floor(100 + Math.random() * 900)}`;
+  const itemId = `item-${Date.now()}`;
+  
+  let finalPhotoUrl = null;
+
+  // LOGIKA BARU: Unggah file biner asli ke Supabase Storage Bucket jika ada file yang dipilih
+  if (isLiveSupabase && supabaseClient && fileInput && fileInput.files.length > 0) {
+    const file = fileInput.files[0];
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${itemId}.${fileExt}`; // Membuat nama file unik berdasarkan ID barang
+    const filePath = `${fileName}`;
+
+    showToast('Uploading image to Supabase Storage...', 'info');
+
+    // Proses upload ke bucket 'photos'
+    const { data: storageData, error: storageError } = await supabaseClient
+      .storage
+      .from('photos')
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true
+      });
+
+    if (storageError) {
+      console.error('Gagal upload ke Storage:', storageError.message);
+      showToast(`Gagal upload foto: ${storageError.message}`, 'error');
+    } else {
+      // Dapatkan URL Publik dari file yang berhasil diunggah
+      const { data: publicUrlData } = supabaseClient
+        .storage
+        .from('photos')
+        .getPublicUrl(filePath);
+        
+      finalPhotoUrl = publicUrlData.publicUrl;
+    }
+  } else if (urlInput) {
+    // Jika user menginput URL gambar eksternal langsung
+    finalPhotoUrl = urlInput;
+  } else {
+    // Fallback ke Base64 preview jika offline mode
+    finalPhotoUrl = pendingPhotoDataUrl;
+  }
 
   const newItem = {
-    id: `item-${Date.now()}`,
+    id: itemId,
     item_code: randomCode,
     item_name: name,
     category: category,
     remark: remark || null,
-    photo_url: pendingPhotoDataUrl || null,
+    photo_url: finalPhotoUrl, // Menyimpan URL publik resmi dari bucket Supabase
     is_active: true,
     created_at: new Date().toISOString(),
     created_by: currentUser ? currentUser.email : 'admin@hotel.com',
@@ -1116,11 +1158,10 @@ async function handleCreateMasterItemSubmit(e) {
   state.masterItems.unshift(newItem);
   logActivity(name, category, 'Added', 'INVENTORY');
   persistState();
-
+  
   document.getElementById('form-create-master-item').reset();
   clearImagePreview('create-item-preview', 'create-item-preview-container');
-
-  showToast(`Master Item "${name}" berhasil dibuat!`, 'success');
+  showToast(`Master Item "${name}" berhasil dibuat dengan foto di cloud!`, 'success');
   navigateTo('inventory');
 }
 
