@@ -29,8 +29,8 @@ const STORAGE_KEYS = {
 };
 
 // Default fallback Supabase credentials (from Redeploy Auth)
-const DEFAULT_SUPABASE_URL = 'https://yoursupabase.supabase.co';
-const DEFAULT_SUPABASE_KEY = '12345678';
+const DEFAULT_SUPABASE_URL = 'https://ufcutuputdpnepuhcwaq.supabase.co';
+const DEFAULT_SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmY3V0dXB1dGRwbmVwdWhjd2FxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMyNDIyNTMsImV4cCI6MjEwODgxODI1M30.LtVk8UvjTsltm0J_gR-6zWZqh8bachvYTvMurALhK88';
 
 // Universal Anti-Wrap Badge Formatters (Guarantee Clean Single-Line Badges)
 function formatCategoryBadge(category) {
@@ -94,133 +94,6 @@ function getInitialSeedData() {
     const d = new Date();
     d.setDate(d.getDate() - days);
     return d.toISOString().split('T')[0];
-  };
-
-  return {
-    masterItems: [
-      {
-        id: 'item-001',
-        item_code: 'PC-001',
-        item_name: 'Dell OptiPlex 7090 Desktop Intel Core i7',
-        category: 'PC ITEMS',
-        remark: 'Front Office & Admin Standard Workstation (16GB RAM, 512GB SSD)',
-        photo_url: 'https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=400&auto=format&fit=crop&q=80',
-        is_active: true,
-        created_at: dAgo(15),
-        created_by: 'admin@hotel.com',
-        updated_at: dAgo(15)
-      },
-      {
-        id: 'item-002',
-        item_code: 'PC-002',
-        item_name: 'Lenovo ThinkPad E14 Gen 4 Core i5',
-        category: 'PC ITEMS',
-        remark: 'Management & Duty Manager Laptop',
-        photo_url: 'https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=400&auto=format&fit=crop&q=80',
-        is_active: true,
-        created_at: dAgo(12),
-        created_by: 'admin@hotel.com',
-        updated_at: dAgo(12)
-      },
-      {
-        id: 'item-003',
-        item_code: 'NET-001',
-        item_name: 'Cisco Catalyst 2960-X 48-Port PoE Switch',
-        category: 'NETWORK ITEMS',
-        remark: 'Floor Distribution & AP Core Switch',
-        photo_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&auto=format&fit=crop&q=80',
-        is_active: true,
-        created_at: dAgo(18),
-        created_by: 'admin@hotel.com',
-        updated_at: dAgo(18)
-      },
-      {
-        id: 'item-004',
-        item_code: 'NET-002',
-        item_name: 'Ubiquiti UniFi U6-Pro WiFi 6 Access Point',
-        category: 'NETWORK ITEMS',
-        remark: 'Guest Corridor & Ballroom High Density AP',
-        photo_url: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&auto=format&fit=crop&q=80',
-        is_active: true,
-        created_at: dAgo(10),
-        created_by: 'admin@hotel.com',
-        updated_at: dAgo(10)
-      },
-      {
-        id: 'item-005',
-        item_code: 'CCTV-001',
-        item_name: 'Hikvision 4MP IP Dome Camera DS-2CD2143G2-I',
-        category: 'CCTV & TV ITEMS',
-        remark: 'Lobby & Corridor Night Vision Surveillance',
-        photo_url: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=400&auto=format&fit=crop&q=80',
-        is_active: true,
-        created_at: dAgo(14),
-        created_by: 'admin@hotel.com',
-        updated_at: dAgo(14)
-      },
-      {
-        id: 'item-006',
-        item_code: 'CCTV-002',
-        item_name: 'Samsung 50" Crystal 4K UHD Smart Hospitality TV',
-        category: 'CCTV & TV ITEMS',
-        remark: 'Guest Room & Executive Lounge Display',
-        photo_url: 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=400&auto=format&fit=crop&q=80',
-        is_active: true,
-        created_at: dAgo(20),
-        created_by: 'admin@hotel.com',
-        updated_at: dAgo(20)
-      },
-      {
-        id: 'item-007',
-        item_code: 'LCK-001',
-        item_name: 'Vingcard Essence RFID Electronic Door Lock',
-        category: 'LOCK SYSTEM',
-        remark: 'Guest Room RFID Smart Door Lock System',
-        photo_url: 'https://images.unsplash.com/photo-1558002038-1055907df827?w=400&auto=format&fit=crop&q=80',
-        is_active: true,
-        created_at: dAgo(4),
-        created_by: 'admin@hotel.com',
-        updated_at: dAgo(4)
-      }
-    ],
-    stockTransactions: [
-      { id: 'tx-001', item_id: 'item-001', transaction_date: dAgo(15), quantity: 15, remark: 'Batch pengadaan PC Q4', created_by: 'admin@hotel.com', created_at: dAgo(15) },
-      { id: 'tx-002', item_id: 'item-002', transaction_date: dAgo(12), quantity: 10, remark: 'Pengadaan Laptop Staff', created_by: 'admin@hotel.com', created_at: dAgo(12) },
-      { id: 'tx-003', item_id: 'item-003', transaction_date: dAgo(18), quantity: 6, remark: 'Cadangan Switch Server Room', created_by: 'admin@hotel.com', created_at: dAgo(18) },
-      { id: 'tx-004', item_id: 'item-004', transaction_date: dAgo(10), quantity: 20, remark: 'Ekspansi WiFi Lantai 3-5', created_by: 'admin@hotel.com', created_at: dAgo(10) },
-      { id: 'tx-005', item_id: 'item-005', transaction_date: dAgo(14), quantity: 25, remark: 'Replacement CCTV Unit', created_by: 'admin@hotel.com', created_at: dAgo(14) },
-      { id: 'tx-006', item_id: 'item-006', transaction_date: dAgo(20), quantity: 12, remark: 'Stok Spare TV Kamar Deluxe', created_by: 'admin@hotel.com', created_at: dAgo(20) },
-      { id: 'tx-007', item_id: 'item-007', transaction_date: dAgo(4), quantity: 18, remark: 'Pengadaan Unit Cadangan Vingcard Lock', created_by: 'admin@hotel.com', created_at: dAgo(4) }
-    ],
-    departmentMovements: [
-      { id: 'mov-001', item_id: 'item-001', department: 'Front Office', type: 'TRANSFER_TO_DEPARTMENT', quantity: 4, date: dAgo(8), recipient_name: 'Budi Santoso (FOM)', remark: 'Unit PC untuk Receptionist Counter 1-4', created_by: 'admin@hotel.com', created_at: dAgo(8) },
-      { id: 'mov-002', item_id: 'item-001', department: 'Accounting', type: 'TRANSFER_TO_DEPARTMENT', quantity: 3, date: dAgo(7), recipient_name: 'Siti Rahma (Chief Acct)', remark: 'Unit PC Finance & Night Auditor', created_by: 'admin@hotel.com', created_at: dAgo(7) },
-      { id: 'mov-003', item_id: 'item-002', department: 'Sales & Marketing', type: 'TRANSFER_TO_DEPARTMENT', quantity: 2, date: dAgo(5), recipient_name: 'Rian Pratama (DOSM)', remark: 'Laptop untuk Sales Executive Client Visit', created_by: 'admin@hotel.com', created_at: dAgo(5) },
-      { id: 'mov-004', item_id: 'item-004', department: 'Engineering', type: 'TRANSFER_TO_DEPARTMENT', quantity: 5, date: dAgo(4), recipient_name: 'Agus Setiawan (Chief Eng)', remark: 'Pemasangan AP Area Pre-function', created_by: 'admin@hotel.com', created_at: dAgo(4) },
-      { id: 'mov-005', item_id: 'item-005', department: 'House Keeping', type: 'TRANSFER_TO_DEPARTMENT', quantity: 2, date: dAgo(3), recipient_name: 'Lina Marlina (HK Mgr)', remark: 'CCTV Koridor Linen Room', created_by: 'admin@hotel.com', created_at: dAgo(3) },
-      { id: 'mov-006', item_id: 'item-001', department: 'Front Office', type: 'RETURN_TO_INVENTORY', quantity: 1, date: dAgo(1), recipient_name: 'Budi Santoso (FOM)', remark: 'Kembali ke IT untuk maintenance berkala', created_by: 'admin@hotel.com', created_at: dAgo(1) },
-      { id: 'mov-007', item_id: 'item-007', department: 'Engineering', type: 'TRANSFER_TO_DEPARTMENT', quantity: 4, date: dAgo(2), recipient_name: 'Hendra (Lock Eng)', remark: 'Pemasangan Lock Kamar 201-204', created_by: 'admin@hotel.com', created_at: dAgo(2) },
-      { id: 'mov-008', item_id: 'item-002', department: 'F&B Service', type: 'TRANSFER_TO_DEPARTMENT', quantity: 1, date: dAgo(3), recipient_name: 'Captain Resto (FBS)', remark: 'Laptop Kasir POS Resto', created_by: 'admin@hotel.com', created_at: dAgo(3) },
-      { id: 'mov-009', item_id: 'item-001', department: 'F&B Product', type: 'TRANSFER_TO_DEPARTMENT', quantity: 1, date: dAgo(3), recipient_name: 'Chef Executive (FBP)', remark: 'PC Kitchen Display System', created_by: 'admin@hotel.com', created_at: dAgo(3) },
-      { id: 'mov-010', item_id: 'item-004', department: 'Wellness', type: 'TRANSFER_TO_DEPARTMENT', quantity: 1, date: dAgo(2), recipient_name: 'Spa & Fitness Supervisor', remark: 'AP Ruang Gym & Spa', created_by: 'admin@hotel.com', created_at: dAgo(2) }
-    ],
-    purchaseOrders: [
-      { id: 'po-001', po_number: 'PO-2026-10-001', item_id: 'item-001', item_name: 'Dell OptiPlex 7090 Desktop Intel Core i7', category: 'PC ITEMS', photo_url: 'https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400&auto=format&fit=crop&q=80', date_order: dAgo(14), date_arrival: dAgo(2), quantity: 20, for_use: 'Stock Workstation Replacement All Depts', remarks: 'Vendor Surya Komputer Jakarta', vendor: 'Surya Komputer', status: 'SUDAH DATANG', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(14) },
-      { id: 'po-002', po_number: 'PO-2026-10-002', item_id: 'item-003', item_name: 'Cisco Catalyst 2960-X 48-Port PoE Switch', category: 'NETWORK ITEMS', photo_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&auto=format&fit=crop&q=80', date_order: dAgo(5), date_arrival: null, quantity: 3, for_use: 'Peremajaan Switch Gedung Annex', remarks: 'Menunggu pengiriman dari distributor', vendor: 'Kabelindo Jaya', status: 'BELUM DATANG', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(5) },
-      { id: 'po-003', po_number: 'PO-2026-10-003', item_id: 'item-005', item_name: 'Hikvision 4MP IP Dome Camera DS-2CD2143G2-I', category: 'CCTV & TV ITEMS', photo_url: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?w=400&auto=format&fit=crop&q=80', date_order: dAgo(3), date_arrival: null, quantity: 1, for_use: 'Upgrade Server CCTV Ruang Security', remarks: 'Estimasi tiba akhir bulan', vendor: 'Security CCTV Specialist', status: 'BELUM DATANG', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(3) }
-    ],
-    preloved: [
-      { id: 'pre-001', item_code: 'PRE-PC-01', item_name: 'HP ProDesk 400 G4 Desktop (Refurbished)', category: 'PC ITEMS', date_repaired: dAgo(12), quantity: 2, serial_number: 'SN-HP-99201A', remark: 'Ex Front Office counter. RAM upgraded to 16GB, SSD 256GB baru', photo_url: 'https://images.unsplash.com/photo-1587831990711-23ca6441447b?w=400&auto=format&fit=crop&q=80', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(12) },
-      { id: 'pre-002', item_code: 'PRE-NET-01', item_name: 'MikroTik Cloud Router RB1100AHx4', category: 'NETWORK ITEMS', date_repaired: dAgo(8), quantity: 1, serial_number: 'SN-MT-48218C', remark: 'Ex Core Backup. Sudah di-reset default RouterOS v7.14', photo_url: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=400&auto=format&fit=crop&q=80', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(8) },
-      { id: 'pre-003', item_code: 'PRE-CCTV-01', item_name: 'LG 43" Commercial TV 43UN7100 (Ex Guest Room)', category: 'CCTV & TV ITEMS', date_repaired: dAgo(4), quantity: 3, serial_number: 'SN-LG-88319X', remark: 'Ex Kamar 401-403, kondisi layar mulus 95%, lengkap remote & bracket', photo_url: 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=400&auto=format&fit=crop&q=80', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(4) },
-      { id: 'pre-004', item_code: 'PRE-LCK-01', item_name: 'Vingcard Classic Magnetic Lock Reader Module', category: 'LOCK SYSTEM', date_repaired: dAgo(2), quantity: 4, serial_number: 'SN-VC-33019M', remark: 'Ex Kamar Lantai 1, motherboard lock disolder ulang & kalibrasi reader OK', photo_url: 'https://images.unsplash.com/photo-1558002038-1055907df827?w=400&auto=format&fit=crop&q=80', created_by: 'admin@hotel.com', updated_by: 'admin@hotel.com', created_at: dAgo(2) }
-    ],
-    activities: [
-      { id: 'act-001', item_name: 'Dell OptiPlex 7090 Desktop', category: 'PC ITEMS', action: 'Added', username: 'admin@hotel.com', timestamp: dAgo(15), type: 'INVENTORY' },
-      { id: 'act-002', item_name: 'Front Office Handover (4 Units)', category: 'PC ITEMS', action: 'Transfer', username: 'admin@hotel.com', timestamp: dAgo(8), type: 'DEPARTMENT' },
-      { id: 'act-003', item_name: 'Logitech MK270 Wireless Combo', category: 'PC ITEMS', action: 'Received', username: 'admin@hotel.com', timestamp: dAgo(2), type: 'PURCHASE ORDER' },
-      { id: 'act-004', item_name: 'Front Office Return (1 Unit)', category: 'PC ITEMS', action: 'Return', username: 'admin@hotel.com', timestamp: dAgo(1), type: 'DEPARTMENT' }
-    ]
   };
 }
 
