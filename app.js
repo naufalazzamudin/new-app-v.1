@@ -781,7 +781,7 @@ function updateConnectionBadge(isLive) {
       settingsBadge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
     }
     if (configLabel) {
-      configLabel.textContent = 'Ready for Live Supabase & Realtime Sync';
+      configLabel.textContent = 'https://copyandi.vercel.app/';
       configLabel.className = 'text-[11px] text-emerald-400 font-medium';
     }
   } else {
