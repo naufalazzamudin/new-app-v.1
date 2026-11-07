@@ -117,11 +117,20 @@ let currentInstallTarget = null; // { pcId, slotKey, slotLabel }
 // ==============================================================================
 // 2. INITIAL SEED / OFFLINE FALLBACK DATA
 // ==============================================================================
+function getInitialSeedData() {
+  return {
+    masterItems: [],
+    stockTransactions: [],
+    departmentMovements: [],
+    purchaseOrders: [],
+    preloved: [],
+    activities: [],
+    pcs: [],
+    pcMovements: [],
+    pcComponentMovements: []
+  };
+}
 
-
-// ==============================================================================
-// 3. STORAGE & SUPABASE INITIALIZATION
-// ==============================================================================
 // ==============================================================================
 // 3. STORAGE & SUPABASE INITIALIZATION & REALTIME ENGINE
 // ==============================================================================
@@ -3296,34 +3305,45 @@ function renderPCManagement() {
         </div>
 
         <!-- Quick Action Footer -->
-        <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-2 text-xs" onclick="event.stopPropagation()">
+        <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-1.5 text-xs" onclick="event.stopPropagation()">
+          <div class="flex items-center gap-1.5 flex-1 min-w-0">
+            <button
+              type="button"
+              onclick="openModalPCDetail('${pc.id}')"
+              class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition flex items-center gap-1.5 truncate"
+            >
+              <i class="fa-solid fa-sliders text-[10px] text-indigo-400 shrink-0"></i>
+              <span class="truncate">Detail & Komponen</span>
+            </button>
+
+            ${isAssigned ? `
+              <button
+                type="button"
+                onclick="handleRemovePCFromDept('${pc.id}')"
+                class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-semibold transition whitespace-nowrap shrink-0"
+                title="Lepas PC Dari Departemen"
+              >
+                Lepas
+              </button>
+            ` : `
+              <button
+                type="button"
+                onclick="openAssignDeptPrompt('${pc.id}')"
+                class="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[11px] font-semibold transition whitespace-nowrap shrink-0"
+              >
+                + Pasang ke Dept
+              </button>
+            `}
+          </div>
+
           <button
             type="button"
-            onclick="openModalPCDetail('${pc.id}')"
-            class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition flex items-center gap-1.5"
+            onclick="confirmDeletePC('${pc.id}')"
+            class="p-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[11px] transition shrink-0"
+            title="Delete PC (Semua Komponen Otomatis Kembali ke Inventory)"
           >
-            <i class="fa-solid fa-sliders text-[10px] text-indigo-400"></i>
-            <span>Detail & Komponen</span>
+            <i class="fa-solid fa-trash-can text-xs"></i>
           </button>
-
-          ${isAssigned ? `
-            <button
-              type="button"
-              onclick="handleRemovePCFromDept('${pc.id}')"
-              class="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[11px] font-semibold transition whitespace-nowrap"
-              title="Lepas PC Dari Departemen"
-            >
-              Lepas
-            </button>
-          ` : `
-            <button
-              type="button"
-              onclick="openAssignDeptPrompt('${pc.id}')"
-              class="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[11px] font-semibold transition whitespace-nowrap"
-            >
-              + Pasang ke Dept
-            </button>
-          `}
         </div>
       </div>
     `;
@@ -3820,6 +3840,189 @@ function openAssignDeptPrompt(pcId) {
   openModalPCDetail(pcId);
 }
 
+// ==============================================================================
+// DELETE PC & AUTO-RETURN COMPONENTS ENGINE
+// ==============================================================================
+let pendingDeletePCId = null;
+
+function confirmDeletePC(pcId) {
+  const pc = state.pcs.find(p => p.id === pcId);
+  if (!pc) return;
+
+  pendingDeletePCId = pcId;
+
+  const nameEl = document.getElementById('delete-pc-name-display');
+  const listEl = document.getElementById('delete-pc-components-list');
+
+  if (nameEl) {
+    nameEl.textContent = `${pc.name} (${pc.chipset || 'Workstation'})`;
+  }
+
+  const slotDefs = [
+    { key: 'psu_item_id', label: 'Power Supply', icon: 'fa-bolt' },
+    { key: 'storage_item_id', label: 'Hardisk / SSD', icon: 'fa-hard-drive' },
+    { key: 'ram1_item_id', label: 'RAM Slot 1', icon: 'fa-memory' },
+    { key: 'ram2_item_id', label: 'RAM Slot 2', icon: 'fa-memory' },
+    { key: 'ram3_item_id', label: 'RAM Slot 3', icon: 'fa-memory' },
+    { key: 'vga_item_id', label: 'VGA Card', icon: 'fa-tv' }
+  ];
+
+  const installed = [];
+  slotDefs.forEach(slot => {
+    const itemId = pc[slot.key];
+    if (itemId) {
+      const item = state.masterItems.find(i => i.id === itemId);
+      installed.push({
+        slotKey: slot.key,
+        slotLabel: slot.label,
+        icon: slot.icon,
+        itemId: itemId,
+        itemName: item ? item.item_name : 'Hardware Component'
+      });
+    }
+  });
+
+  if (listEl) {
+    if (installed.length === 0) {
+      listEl.innerHTML = `
+        <div class="p-3 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-400 text-center">
+          Tidak ada komponen hardware yang terpasang pada PC ini.
+        </div>
+      `;
+    } else {
+      listEl.innerHTML = installed.map(comp => `
+        <div class="px-3 py-2 rounded-lg bg-slate-900/90 border border-slate-800 flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2 min-w-0">
+            <i class="fa-solid ${comp.icon} text-indigo-400 shrink-0 text-xs"></i>
+            <span class="text-slate-400 shrink-0 font-medium">${comp.slotLabel}:</span>
+            <span class="font-bold text-white truncate" title="${escapeHtml(comp.itemName)}">${escapeHtml(comp.itemName)}</span>
+          </div>
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0 ml-2">
+            +1 ke Inventory
+          </span>
+        </div>
+      `).join('');
+    }
+  }
+
+  openModal('modal-delete-pc');
+}
+
+function openDeletePCModalFromDetail() {
+  if (!currentDetailPCId) return;
+  confirmDeletePC(currentDetailPCId);
+}
+
+async function executeDeletePC() {
+  if (!pendingDeletePCId) return;
+
+  const pcIndex = state.pcs.findIndex(p => p.id === pendingDeletePCId);
+  if (pcIndex === -1) {
+    closeModal('modal-delete-pc');
+    return;
+  }
+
+  const pc = state.pcs[pcIndex];
+  const deviceTimestamp = getClientDeviceTimestamp();
+  const currentDate = deviceTimestamp.split(' ')[0];
+  const actor = currentUser ? currentUser.email : 'admin@hotel.com';
+
+  const slotDefs = [
+    { key: 'psu_item_id', label: 'Power Supply' },
+    { key: 'storage_item_id', label: 'Hardisk / SSD' },
+    { key: 'ram1_item_id', label: 'RAM Slot 1' },
+    { key: 'ram2_item_id', label: 'RAM Slot 2' },
+    { key: 'ram3_item_id', label: 'RAM Slot 3' },
+    { key: 'vga_item_id', label: 'VGA Card' }
+  ];
+
+  let returnedCount = 0;
+  const returnedMovements = [];
+  const returnedCompMovements = [];
+
+  // Return each installed component back to inventory stock
+  slotDefs.forEach(slot => {
+    const itemId = pc[slot.key];
+    if (itemId) {
+      returnedCount++;
+      const itemObj = state.masterItems.find(i => i.id === itemId);
+      const itemName = itemObj ? itemObj.item_name : 'Hardware Component';
+
+      // 1. Movement log in departmentMovements as 'RETURN FROM PC'
+      // This immediately increases availableStock in calculateStockMetrics
+      const mov = {
+        id: `mov-ret-del-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        item_id: itemId,
+        department: '-',
+        type: 'RETURN FROM PC',
+        quantity: 1,
+        date: currentDate,
+        recipient_name: 'IT Storage (PC Deleted)',
+        remark: `Otomatis kembali ke inventory karena PC "${pc.name}" dihapus`
+      };
+      state.departmentMovements.unshift(mov);
+      returnedMovements.push(mov);
+
+      // 2. PC Component Movement log
+      const compMov = {
+        id: `pccm-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+        timestamp: deviceTimestamp,
+        pc_id: pc.id,
+        pc_name: pc.name,
+        slot_name: slot.label,
+        item_id: itemId,
+        item_name: itemName,
+        action_type: 'RETURN_TO_INVENTORY',
+        related_pc_name: null,
+        actor: actor,
+        notes: `Komponen otomatis kembali ke inventory karena PC "${pc.name}" dihapus`
+      };
+      state.pcComponentMovements.unshift(compMov);
+      returnedCompMovements.push(compMov);
+    }
+  });
+
+  // 3. PC Movement log for the PC deletion itself
+  const pcm = {
+    id: `pcm-${Date.now()}`,
+    timestamp: deviceTimestamp,
+    pc_id: pc.id,
+    pc_name: pc.name,
+    action_type: 'HAPUS_PC',
+    from_location: pc.department ? pc.department : 'Ready in IT Storage',
+    to_location: 'Deleted (Hardware Returned)',
+    actor: actor,
+    notes: `Workstation ${pc.name} dihapus. Sebanyak ${returnedCount} komponen hardware otomatis dikembalikan ke stok gudang IT.`
+  };
+  state.pcMovements.unshift(pcm);
+
+  // 4. Remove PC from state.pcs
+  state.pcs.splice(pcIndex, 1);
+
+  // 5. Supabase persistence if connected
+  if (isLiveSupabase && supabaseClient) {
+    supabaseClient.from('pcs').delete().eq('id', pc.id).then(() => {});
+    supabaseClient.from('pc_movements').insert(pcm).then(() => {});
+    returnedMovements.forEach(m => {
+      supabaseClient.from('department_movements').insert(m).then(() => {});
+    });
+    returnedCompMovements.forEach(cm => {
+      supabaseClient.from('pc_component_movements').insert(cm).then(() => {});
+    });
+  }
+
+  logActivity(pc.name, 'PC ITEMS', `Hapus PC ${pc.name} & kembalikan ${returnedCount} komponen ke inventory`, 'WORKSTATION');
+  persistState();
+
+  closeModal('modal-delete-pc');
+  closeModal('modal-pc-detail');
+  pendingDeletePCId = null;
+  currentDetailPCId = null;
+
+  refreshAllViews();
+  showToast(`PC "${pc.name}" berhasil dihapus. ${returnedCount} komponen telah otomatis kembali ke Inventory Stock!`, 'success');
+}
+
 function openComponentActionModal(pcId, slotKey, slotLabel) {
   currentActionSlot = { pcId, slotKey, slotLabel };
   const pc = state.pcs.find(p => p.id === pcId);
@@ -4170,21 +4373,31 @@ function renderDepartmentWorkstations(deptName) {
           </div>
         </div>
 
-        <div class="mt-3 pt-2.5 border-t border-slate-800 flex items-center justify-between gap-2" onclick="event.stopPropagation()">
+        <div class="mt-3 pt-2.5 border-t border-slate-800 flex items-center justify-between gap-1.5" onclick="event.stopPropagation()">
+          <div class="flex items-center gap-1.5">
+            <button
+              type="button"
+              onclick="openModalPCDetail('${pc.id}')"
+              class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition flex items-center gap-1"
+            >
+              <i class="fa-solid fa-sliders text-[10px] text-indigo-400"></i>
+              <span>Detail PC</span>
+            </button>
+            <button
+              type="button"
+              onclick="handleRemovePCFromDept('${pc.id}')"
+              class="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-semibold transition whitespace-nowrap"
+            >
+              Lepas
+            </button>
+          </div>
           <button
             type="button"
-            onclick="openModalPCDetail('${pc.id}')"
-            class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition flex items-center gap-1"
+            onclick="confirmDeletePC('${pc.id}')"
+            class="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[11px] transition shrink-0"
+            title="Delete PC (Kembalikan Komponen ke Inventory)"
           >
-            <i class="fa-solid fa-sliders text-[10px] text-indigo-400"></i>
-            <span>Detail PC</span>
-          </button>
-          <button
-            type="button"
-            onclick="handleRemovePCFromDept('${pc.id}')"
-            class="px-2.5 py-1 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[11px] font-semibold transition whitespace-nowrap"
-          >
-            Lepas dari Departemen
+            <i class="fa-solid fa-trash-can text-xs"></i>
           </button>
         </div>
       </div>
@@ -4271,6 +4484,8 @@ function formatPCActionTypeBadge(type) {
       return `<span class="badge-pill px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-purple-500/10 text-purple-400 border border-purple-500/30 whitespace-nowrap"><i class="fa-solid fa-shuffle text-[9px] mr-1"></i>PINDAH DEPT</span>`;
     case 'RENAME_PC':
       return `<span class="badge-pill px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 whitespace-nowrap"><i class="fa-solid fa-pen text-[9px] mr-1"></i>RENAME PC</span>`;
+    case 'HAPUS_PC':
+      return `<span class="badge-pill px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-600/20 text-rose-300 border border-rose-500/40 whitespace-nowrap"><i class="fa-solid fa-trash-can text-[9px] mr-1"></i>HAPUS PC</span>`;
     default:
       return `<span class="badge-pill px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700 whitespace-nowrap">${escapeHtml(type)}</span>`;
   }
@@ -4507,6 +4722,9 @@ window.executeDeptAddPC = executeDeptAddPC;
 window.exportPCMovementsExcel = exportPCMovementsExcel;
 window.handleDirectDemoBypassWithEmail = handleDirectDemoBypassWithEmail;
 window.handleDirectDemoBypass = handleDirectDemoBypass;
+window.confirmDeletePC = confirmDeletePC;
+window.openDeletePCModalFromDetail = openDeletePCModalFromDetail;
+window.executeDeletePC = executeDeletePC;
 
 window.openModal = openModal;
 window.closeModal = closeModal;

@@ -2745,7 +2745,16 @@ ALTER TABLE public.pc_component_movements DISABLE ROW LEVEL SECURITY;</pre>
       </div>
 
       <!-- Modal Footer -->
-      <div class="flex items-center justify-end pt-3 border-t border-slate-800">
+      <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+        <button
+          type="button"
+          onclick="openDeletePCModalFromDetail()"
+          class="px-4 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/40 text-xs font-semibold transition flex items-center gap-2"
+          title="Hapus PC ini dan kembalikan seluruh komponen ke inventory"
+        >
+          <i class="fa-solid fa-trash-can text-xs text-rose-400"></i>
+          <span>Delete PC</span>
+        </button>
         <button
           type="button"
           onclick="closeModal('modal-pc-detail')"
@@ -2948,6 +2957,60 @@ ALTER TABLE public.pc_component_movements DISABLE ROW LEVEL SECURITY;</pre>
           class="px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-md transition"
         >
           Pasang ke Departemen
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 6: Delete PC Confirmation & Auto Return Components Modal -->
+  <div id="modal-delete-pc" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel rounded-2xl max-w-md w-full p-6 border border-rose-500/40 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-triangle-exclamation text-rose-400"></i>
+          <span>Konfirmasi Hapus Workstation PC</span>
+        </h3>
+        <button type="button" onclick="closeModal('modal-delete-pc')" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="p-3.5 rounded-xl bg-rose-950/30 border border-rose-500/30 text-xs text-rose-200">
+        <div class="font-bold text-sm text-white flex items-center gap-2 mb-1">
+          <i class="fa-solid fa-desktop text-rose-400"></i>
+          <span id="delete-pc-name-display">PC-FO-01</span>
+        </div>
+        <p class="text-slate-300">
+          Apakah Anda yakin ingin menghapus PC ini? Seluruh hardware yang terpasang di bawah ini akan <span class="font-bold text-amber-300">otomatis dilepas dan dikembalikan ke stok gudang Inventory</span> (+1 unit per komponen).
+        </p>
+      </div>
+
+      <div>
+        <h5 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+          <i class="fa-solid fa-boxes-packing text-indigo-400"></i>
+          <span>Daftar Komponen yang Akan Kembali ke Inventory:</span>
+        </h5>
+        <div id="delete-pc-components-list" class="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+        <button
+          type="button"
+          onclick="closeModal('modal-delete-pc')"
+          class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700 transition"
+        >
+          Batal
+        </button>
+        <button
+          type="button"
+          id="btn-confirm-delete-pc"
+          onclick="executeDeletePC()"
+          class="px-5 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-500 hover:to-red-500 text-white text-xs font-bold shadow-lg shadow-rose-600/30 transition flex items-center gap-2"
+        >
+          <i class="fa-solid fa-trash-can text-xs"></i>
+          <span>Hapus PC & Kembalikan Komponen</span>
         </button>
       </div>
     </div>
