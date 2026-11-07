@@ -2527,7 +2527,7 @@ ALTER TABLE public.pc_component_movements DISABLE ROW LEVEL SECURITY;</pre>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-semibold text-slate-400 mb-1" for="add-pc-name">
-              Nama PC (Ketik Manual) <span class="text-rose-400">*</span>
+              Nama PC <span class="text-rose-400">*</span>
             </label>
             <input
               type="text"
@@ -2539,7 +2539,7 @@ ALTER TABLE public.pc_component_movements DISABLE ROW LEVEL SECURITY;</pre>
           </div>
           <div>
             <label class="block text-xs font-semibold text-slate-400 mb-1" for="add-pc-chipset">
-              Chipset (Intel / AMD, Ketik Manual) <span class="text-rose-400">*</span>
+              Chipset <span class="text-rose-400">*</span>
             </label>
             <input
               type="text"
@@ -2555,9 +2555,9 @@ ALTER TABLE public.pc_component_movements DISABLE ROW LEVEL SECURITY;</pre>
           <div class="flex items-center justify-between mb-2">
             <span class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
               <i class="fa-solid fa-microchip"></i>
-              <span>Alokasi Komponen Hardware (Dari PC ITEMS Inventory)</span>
+              <span>Alokasi Komponen Hardware</span>
             </span>
-            <span class="text-[11px] text-slate-500">Stok Inventory otomatis berkurang 1</span>
+            <span class="text-[11px] text-slate-500">Stok berkurang 1</span>
           </div>
 
           <!-- Component Selectors Grid -->
@@ -2591,7 +2591,7 @@ ALTER TABLE public.pc_component_movements DISABLE ROW LEVEL SECURITY;</pre>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
                 <label class="block text-[11px] font-semibold text-slate-400 mb-1" for="add-pc-ram1">
-                  RAM Slot 1 (Wajib) <span class="text-rose-400">*</span>
+                  RAM Slot 1 <span class="text-rose-400">*</span>
                 </label>
                 <select
                   id="add-pc-ram1"
@@ -2647,7 +2647,7 @@ ALTER TABLE public.pc_component_movements DISABLE ROW LEVEL SECURITY;</pre>
         <div class="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-[11px] text-indigo-300 flex items-start gap-2">
           <i class="fa-solid fa-circle-info text-indigo-400 mt-0.5 shrink-0"></i>
           <div>
-            <strong>Catatan Otomatis:</strong> Setiap komponen yang dipilih akan otomatis berkurang 1 unit dari Inventory Stock dan tercatat di Motion Analytics sebagai <span class="font-mono text-white">TRANSFER TO PC</span> (Dept: -, Qty: 1, PIC: -, Notes: -).
+            <strong>Catatan Otomatis:</strong>Pergerakan komponen realtime dan tercatat di PC Movement Analytics dan Motion Analytics.
           </div>
         </div>
 
@@ -2663,7 +2663,7 @@ ALTER TABLE public.pc_component_movements DISABLE ROW LEVEL SECURITY;</pre>
             type="submit"
             class="px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-brand-600 hover:from-indigo-500 hover:to-brand-500 text-white text-xs font-semibold shadow-md transition"
           >
-            Rakit PC & Alokasikan Komponen
+            Rakit PC Sekarang
           </button>
         </div>
       </form>
