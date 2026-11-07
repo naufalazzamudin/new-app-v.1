@@ -394,6 +394,32 @@
           <div class="pt-2 border-t border-slate-800/80 my-2"></div>
 
           <div class="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
+            Workstation Systems
+          </div>
+
+          <button
+            type="button"
+            onclick="navigateTo('pc-management')"
+            id="nav-pc-management"
+            class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition"
+          >
+            <i class="fa-solid fa-desktop w-5 text-center text-indigo-400"></i>
+            <span>PC Management</span>
+          </button>
+
+          <button
+            type="button"
+            onclick="navigateTo('pc-movements')"
+            id="nav-pc-movements"
+            class="nav-btn w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800/80 transition"
+          >
+            <i class="fa-solid fa-shuffle w-5 text-center text-pink-400"></i>
+            <span>PC Movement Analytics</span>
+          </button>
+
+          <div class="pt-2 border-t border-slate-800/80 my-2"></div>
+
+          <div class="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-500">
             Procurement & Refurbish
           </div>
 
@@ -502,6 +528,14 @@
                   </button>
                   <button
                     type="button"
+                    onclick="openModalAddPC()"
+                    class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-xl bg-indigo-600/30 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/40 font-semibold text-[11px] sm:text-xs transition flex items-center justify-center gap-1.5 sm:gap-2 text-center"
+                  >
+                    <i class="fa-solid fa-desktop text-xs text-indigo-400"></i>
+                    <span>+ Rakit PC</span>
+                  </button>
+                  <button
+                    type="button"
                     onclick="openModalInbound()"
                     class="w-full sm:w-auto px-3 sm:px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-[11px] sm:text-xs border border-slate-700 transition flex items-center justify-center gap-1.5 sm:gap-2 text-center"
                   >
@@ -541,9 +575,27 @@
             </div>
           </div>
 
-          <!-- 6 Primary Interactive Metric Cards -->
-          <div class="grid grid-cols-2 lg:grid-cols-3 gap-4">
-            <!-- 1. Available Stock -->
+          <!-- 7 Primary Interactive Metric Cards -->
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <!-- 1. Workstations (PC) -->
+            <div
+              onclick="navigateTo('pc-management')"
+              class="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-indigo-500/50 transition cursor-pointer group"
+            >
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Workstation PCs</span>
+                <div class="w-9 h-9 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition">
+                  <i class="fa-solid fa-desktop"></i>
+                </div>
+              </div>
+              <div class="mt-3 text-2xl font-bold font-mono text-white" id="stat-pc-count">0</div>
+              <div class="mt-1 text-xs text-slate-500 flex items-center justify-between">
+                <span id="stat-pc-subtext">0 Dept · 0 Storage</span>
+                <i class="fa-solid fa-arrow-right text-[10px] text-slate-600 group-hover:text-indigo-400 transition"></i>
+              </div>
+            </div>
+
+            <!-- 2. Available Stock -->
             <div
               onclick="navigateTo('inventory')"
               class="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-brand-500/50 transition cursor-pointer group"
@@ -1003,6 +1055,41 @@
               <p>Belum ada aset IT yang didistribusikan ke departemen ini.</p>
             </div>
           </div>
+
+          <!-- Department Workstation / PC Assigned to Active Dept -->
+          <div class="glass-panel rounded-2xl p-6 border border-slate-800 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                  <i class="fa-solid fa-desktop text-indigo-400"></i>
+                  <span>Workstations Terpasang di <span id="dept-workstation-dept-name" class="text-amber-300">Front Office</span></span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">
+                  Daftar PC aktif yang ditugaskan ke departemen ini dari PC Management
+                </p>
+              </div>
+              <button
+                type="button"
+                onclick="openModalDeptAddPC()"
+                class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs shadow-md shadow-indigo-500/20 transition flex items-center gap-2 shrink-0 self-start sm:self-auto"
+              >
+                <i class="fa-solid fa-plus text-xs"></i>
+                <span>ADD PC+</span>
+              </button>
+            </div>
+
+            <!-- Grid of PCs installed in this department -->
+            <div id="dept-pc-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <!-- Dynamically rendered -->
+            </div>
+            <div id="dept-pc-empty-state" class="hidden p-8 text-center text-slate-500 border border-dashed border-slate-800 rounded-xl">
+              <i class="fa-solid fa-desktop text-3xl mb-2 text-slate-600"></i>
+              <p class="text-xs">Belum ada PC yang terpasang di departemen ini.</p>
+              <button type="button" onclick="openModalDeptAddPC()" class="mt-3 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-400 text-xs font-semibold border border-indigo-500/30 transition">
+                + Pasang PC dari IT Storage
+              </button>
+            </div>
+          </div>
         </section>
 
         <!-- =================================================================== -->
@@ -1034,6 +1121,8 @@
                 <option value="ALL">Semua Jenis Gerakan</option>
                 <option value="TRANSFER_TO_DEPARTMENT">TRANSFER KE DEPARTEMEN</option>
                 <option value="RETURN_TO_INVENTORY">KEMBALI KE INVENTORY</option>
+                <option value="TRANSFER TO PC">TRANSFER KE PC</option>
+                <option value="RETURN FROM PC">KEMBALI DARI PC</option>
               </select>
             </div>
             <div>
@@ -1536,8 +1625,263 @@ ALTER TABLE public.stock_transactions DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.department_movements DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.purchase_orders DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.preloved DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
+ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pcs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pc_movements DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pc_component_movements DISABLE ROW LEVEL SECURITY;</pre>
               </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 11: PC MANAGEMENT                                              -->
+        <!-- =================================================================== -->
+        <section id="view-pc-management" class="app-view hidden space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">Workstation Ecosystem</span>
+              </div>
+              <h2 class="text-2xl font-extrabold text-white mt-1">PC Management</h2>
+              <p class="text-xs text-slate-400 mt-1">
+                Daftar & spesifikasi PC hardware di 9 departemen hotel dan unit cadangan di IT Storage
+              </p>
+            </div>
+            <div class="flex items-center gap-3">
+              <button
+                type="button"
+                onclick="openModalAddPC()"
+                class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-brand-600 hover:from-indigo-500 hover:to-brand-500 text-white font-semibold text-xs shadow-lg shadow-indigo-500/25 transition flex items-center gap-2"
+              >
+                <i class="fa-solid fa-screwdriver-wrench"></i>
+                <span>+ Add PC (Rakit PC Baru)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Metrics Bar -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+              <div>
+                <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Total PC Terdaftar</span>
+                <div class="text-2xl font-bold font-mono text-white mt-1" id="pc-stat-total">0</div>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-desktop"></i>
+              </div>
+            </div>
+
+            <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+              <div>
+                <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">PC Terpasang di Dept</span>
+                <div class="text-2xl font-bold font-mono text-amber-300 mt-1" id="pc-stat-in-dept">0</div>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-building-user"></i>
+              </div>
+            </div>
+
+            <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex items-center justify-between">
+              <div>
+                <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Ready in IT Storage</span>
+                <div class="text-2xl font-bold font-mono text-emerald-300 mt-1" id="pc-stat-ready">0</div>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-lg">
+                <i class="fa-solid fa-boxes-stacked"></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter & Search Controls -->
+          <div class="glass-panel rounded-2xl p-4 border border-slate-800 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            <div class="flex flex-wrap items-center gap-1.5" id="pc-filter-tabs">
+              <button
+                type="button"
+                onclick="setPCFilter('ALL')"
+                class="pc-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white"
+                data-filter="ALL"
+              >
+                Semua PC
+              </button>
+              <button
+                type="button"
+                onclick="setPCFilter('IN_DEPT')"
+                class="pc-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white"
+                data-filter="IN_DEPT"
+              >
+                Terpasang di Departemen
+              </button>
+              <button
+                type="button"
+                onclick="setPCFilter('READY')"
+                class="pc-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white"
+                data-filter="READY"
+              >
+                Ready in IT Storage
+              </button>
+            </div>
+
+            <div class="relative w-full md:w-72">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input
+                type="text"
+                id="pc-search"
+                oninput="renderPCManagement()"
+                placeholder="Cari nama PC, chipset, atau departemen..."
+                class="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 outline-none focus:border-brand-500"
+              />
+            </div>
+          </div>
+
+          <!-- Susunan Module Card Persegi Keren (PC Grid) -->
+          <div id="pc-cards-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <!-- Rendered dynamically by app.js -->
+          </div>
+
+          <div id="pc-empty-state" class="hidden glass-panel rounded-2xl p-12 text-center text-slate-500 border border-slate-800">
+            <i class="fa-solid fa-desktop text-4xl mb-3 text-slate-600"></i>
+            <h4 class="text-base font-bold text-slate-300">Belum ada PC yang terdaftar</h4>
+            <p class="text-xs text-slate-400 mt-1 max-w-md mx-auto">
+              Klik tombol "+ Add PC (Rakit PC Baru)" untuk merakit workstation pertama dengan mengalokasikan komponen dari inventaris.
+            </p>
+            <button
+              type="button"
+              onclick="openModalAddPC()"
+              class="mt-4 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md transition"
+            >
+              + Rakit PC Baru
+            </button>
+          </div>
+        </section>
+
+        <!-- =================================================================== -->
+        <!-- VIEW 12: PC MOVEMENT ANALYTICS                                      -->
+        <!-- =================================================================== -->
+        <section id="view-pc-movements" class="app-view hidden space-y-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-pink-500 animate-pulse"></span>
+                <span class="text-xs font-bold uppercase tracking-wider text-pink-400">Live Device Audit Trail</span>
+              </div>
+              <h2 class="text-2xl font-extrabold text-white mt-1">PC Movement Analytics</h2>
+              <p class="text-xs text-slate-400 mt-1">
+                Log kronologis pemindahan PC dan mutasi komponen berbasis jam perangkat real-time
+              </p>
+            </div>
+            <div class="flex items-center gap-3">
+              <button
+                type="button"
+                onclick="exportPCMovementsExcel()"
+                class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shadow-md shadow-emerald-600/20 transition flex items-center gap-2"
+              >
+                <i class="fa-solid fa-file-excel"></i>
+                <span>Export PC Movements Excel</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Sub-Data Tabs (Data Movement PC vs Data Movement Component) -->
+          <div class="glass-panel rounded-2xl p-4 border border-slate-800 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                id="btn-tab-pc-mov"
+                onclick="switchPCMovementTab('pc')"
+                class="px-4 py-2 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-md transition flex items-center gap-2"
+              >
+                <i class="fa-solid fa-desktop text-xs"></i>
+                <span>Data Movement PC</span>
+              </button>
+              <button
+                type="button"
+                id="btn-tab-comp-mov"
+                onclick="switchPCMovementTab('component')"
+                class="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white transition flex items-center gap-2"
+              >
+                <i class="fa-solid fa-microchip text-xs"></i>
+                <span>Data Movement Component</span>
+              </button>
+            </div>
+
+            <div class="relative w-full md:w-72">
+              <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+              <input
+                type="text"
+                id="pc-mov-search"
+                oninput="renderPCMovements()"
+                placeholder="Cari PC, komponen, pelaksana..."
+                class="w-full pl-9 pr-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 outline-none focus:border-brand-500"
+              />
+            </div>
+          </div>
+
+          <!-- Table 1: Data Movement PC -->
+          <div id="container-table-pc-mov" class="glass-panel rounded-2xl border border-slate-800 overflow-hidden">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-desktop text-indigo-400"></i>
+                <h3 class="text-sm font-bold text-white">Log Pemindahan & Perakitan PC</h3>
+              </div>
+              <span class="text-[11px] text-slate-400">Waktu Tercatat: Jam Perangkat User Real-Time</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs min-w-[850px]">
+                <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
+                  <tr>
+                    <th class="py-3 px-4 whitespace-nowrap min-w-[160px]">Waktu (Device Clock)</th>
+                    <th class="py-3 px-4 min-w-[150px]">Nama PC</th>
+                    <th class="py-3 px-4 whitespace-nowrap min-w-[140px]">Tipe Aksi</th>
+                    <th class="py-3 px-4 whitespace-nowrap min-w-[140px]">Dari Lokasi</th>
+                    <th class="py-3 px-4 whitespace-nowrap min-w-[140px]">Ke Lokasi</th>
+                    <th class="py-3 px-4 whitespace-nowrap min-w-[160px]">Pelaksana (Actor)</th>
+                    <th class="py-3 px-4 min-w-[180px]">Catatan / Remarks</th>
+                  </tr>
+                </thead>
+                <tbody id="pc-movements-tbody" class="divide-y divide-slate-800/80">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+            <div id="pc-mov-empty-state" class="hidden p-8 text-center text-slate-500">
+              <i class="fa-solid fa-clock-rotate-left text-3xl mb-2 text-slate-600"></i>
+              <p>Belum ada rekaman pergerakan PC.</p>
+            </div>
+          </div>
+
+          <!-- Table 2: Data Movement Component -->
+          <div id="container-table-comp-mov" class="hidden glass-panel rounded-2xl border border-slate-800 overflow-hidden">
+            <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid fa-microchip text-pink-400"></i>
+                <h3 class="text-sm font-bold text-white">Log Mutasi & Swap Komponen Hardware PC</h3>
+              </div>
+              <span class="text-[11px] text-slate-400">Waktu Tercatat: Jam Perangkat User Real-Time</span>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs min-w-[900px]">
+                <thead class="bg-slate-900/90 text-slate-400 uppercase text-[11px] font-semibold border-b border-slate-800">
+                  <tr>
+                    <th class="py-3 px-4 whitespace-nowrap min-w-[160px]">Waktu (Device Clock)</th>
+                    <th class="py-3 px-4 min-w-[140px]">Nama PC</th>
+                    <th class="py-3 px-4 whitespace-nowrap min-w-[130px]">Slot Komponen</th>
+                    <th class="py-3 px-4 min-w-[180px]">Nama Komponen (Hardware)</th>
+                    <th class="py-3 px-4 whitespace-nowrap min-w-[140px]">Tipe Aksi</th>
+                    <th class="py-3 px-4 whitespace-nowrap min-w-[130px]">Terkait PC (Swap)</th>
+                    <th class="py-3 px-4 whitespace-nowrap min-w-[160px]">Pelaksana (Actor)</th>
+                    <th class="py-3 px-4 min-w-[180px]">Catatan / Remarks</th>
+                  </tr>
+                </thead>
+                <tbody id="pc-comp-movements-tbody" class="divide-y divide-slate-800/80">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+            <div id="pc-comp-mov-empty-state" class="hidden p-8 text-center text-slate-500">
+              <i class="fa-solid fa-clock-rotate-left text-3xl mb-2 text-slate-600"></i>
+              <p>Belum ada rekaman mutasi komponen PC.</p>
             </div>
           </div>
         </section>
@@ -2158,6 +2502,454 @@ ALTER TABLE public.activities DISABLE ROW LEVEL SECURITY;</pre>
           <button type="submit" class="px-5 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-white text-xs font-semibold shadow-md">Simpan Damaged Hardware</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- MODALS: PC MANAGEMENT & WORKSTATIONS                                      -->
+  <!-- ========================================================================= -->
+
+  <!-- Modal 1: Add PC (Rakit PC Baru) -->
+  <div id="modal-add-pc" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel rounded-2xl max-w-2xl w-full p-6 border border-slate-700 shadow-2xl max-h-[92vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-screwdriver-wrench text-indigo-400"></i>
+          <span>Rakit PC Baru (Add PC)</span>
+        </h3>
+        <button type="button" onclick="closeModal('modal-add-pc')" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <form id="form-add-pc" onsubmit="handleCreatePCSubmit(event)" class="space-y-4 mt-4">
+        <!-- Basic Info -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1" for="add-pc-name">
+              Nama PC (Ketik Manual) <span class="text-rose-400">*</span>
+            </label>
+            <input
+              type="text"
+              id="add-pc-name"
+              required
+              placeholder="Contoh: PC-FO-01 / PC-ACCG-02"
+              class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-400 mb-1" for="add-pc-chipset">
+              Chipset (Intel / AMD, Ketik Manual) <span class="text-rose-400">*</span>
+            </label>
+            <input
+              type="text"
+              id="add-pc-chipset"
+              required
+              placeholder="Contoh: Intel Core i5-12400 / B660 atau AMD Ryzen 5"
+              class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none"
+            />
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-800">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-microchip"></i>
+              <span>Alokasi Komponen Hardware (Dari PC ITEMS Inventory)</span>
+            </span>
+            <span class="text-[11px] text-slate-500">Stok Inventory otomatis berkurang 1</span>
+          </div>
+
+          <!-- Component Selectors Grid -->
+          <div class="space-y-3">
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1" for="add-pc-psu">
+                Power Supply (PSU) <span class="text-rose-400">*</span>
+              </label>
+              <select
+                id="add-pc-psu"
+                required
+                class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none"
+              >
+                <!-- Populated dynamically from PC ITEMS -->
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1" for="add-pc-storage">
+                Hardisk / SSD (Storage) <span class="text-rose-400">*</span>
+              </label>
+              <select
+                id="add-pc-storage"
+                required
+                class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none"
+              >
+                <!-- Populated dynamically from PC ITEMS -->
+              </select>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1" for="add-pc-ram1">
+                  RAM Slot 1 (Wajib) <span class="text-rose-400">*</span>
+                </label>
+                <select
+                  id="add-pc-ram1"
+                  required
+                  class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none"
+                >
+                  <!-- Populated dynamically from PC ITEMS -->
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1" for="add-pc-ram2">
+                  RAM Slot 2 (Opsional)
+                </label>
+                <select
+                  id="add-pc-ram2"
+                  class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none"
+                >
+                  <option value="">-- Kosong / Tidak Terpasang --</option>
+                  <!-- Populated dynamically from PC ITEMS -->
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1" for="add-pc-ram3">
+                  RAM Slot 3 (Opsional)
+                </label>
+                <select
+                  id="add-pc-ram3"
+                  class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none"
+                >
+                  <option value="">-- Kosong / Tidak Terpasang --</option>
+                  <!-- Populated dynamically from PC ITEMS -->
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[11px] font-semibold text-slate-400 mb-1" for="add-pc-vga">
+                VGA Card (Opsional / Dedicated GPU)
+              </label>
+              <select
+                id="add-pc-vga"
+                class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none"
+              >
+                <option value="">-- Kosong / Integrated Graphics (Onboard) --</option>
+                <!-- Populated dynamically from PC ITEMS -->
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-[11px] text-indigo-300 flex items-start gap-2">
+          <i class="fa-solid fa-circle-info text-indigo-400 mt-0.5 shrink-0"></i>
+          <div>
+            <strong>Catatan Otomatis:</strong> Setiap komponen yang dipilih akan otomatis berkurang 1 unit dari Inventory Stock dan tercatat di Motion Analytics sebagai <span class="font-mono text-white">TRANSFER TO PC</span> (Dept: -, Qty: 1, PIC: -, Notes: -).
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+          <button
+            type="button"
+            onclick="closeModal('modal-add-pc')"
+            class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700"
+          >
+            Batal
+          </button>
+          <button
+            type="submit"
+            class="px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-brand-600 hover:from-indigo-500 hover:to-brand-500 text-white text-xs font-semibold shadow-md transition"
+          >
+            Rakit PC & Alokasikan Komponen
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: PC Detail & Specs Modal -->
+  <div id="modal-pc-detail" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel rounded-2xl max-w-3xl w-full p-6 border border-slate-700 shadow-2xl max-h-[92vh] overflow-y-auto space-y-5">
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between pb-3 border-b border-slate-800">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-indigo-400"></span>
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">Workstation Details</span>
+          </div>
+          <div class="flex items-center gap-2 mt-1">
+            <div id="pc-detail-name-view" class="flex items-center gap-2">
+              <h3 class="text-xl font-black text-white" id="pc-detail-title">PC-FO-01</h3>
+              <button
+                type="button"
+                onclick="toggleEditPCName(true)"
+                class="text-slate-400 hover:text-white text-xs px-2 py-1 rounded bg-slate-800 border border-slate-700"
+                title="Edit Nama PC"
+              >
+                <i class="fa-solid fa-pen text-[10px]"></i> Edit
+              </button>
+            </div>
+            <div id="pc-detail-name-edit" class="hidden flex items-center gap-2">
+              <input
+                type="text"
+                id="input-edit-pc-name"
+                class="px-3 py-1 rounded-lg bg-slate-900 border border-slate-700 text-sm text-white font-bold outline-none focus:border-brand-500"
+              />
+              <button
+                type="button"
+                onclick="saveEditedPCName()"
+                class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold"
+              >
+                Simpan
+              </button>
+              <button
+                type="button"
+                onclick="toggleEditPCName(false)"
+                class="px-2 py-1 rounded-lg bg-slate-800 text-slate-400 hover:text-white text-xs"
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 mt-1">
+            <span class="text-xs text-slate-400">Chipset:</span>
+            <span class="font-mono text-xs font-semibold text-indigo-300" id="pc-detail-chipset">-</span>
+          </div>
+        </div>
+        <button type="button" onclick="closeModal('modal-pc-detail')" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Department Placement & Assignment Banner -->
+      <div id="pc-detail-dept-banner" class="glass-panel rounded-xl p-4 border border-slate-800">
+        <!-- Rendered dynamically (Assign dropdown or Remove button) -->
+      </div>
+
+      <!-- Component Slots Grid (6 Slots) -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i class="fa-solid fa-microchip text-indigo-400"></i>
+            <span>Komponen Terpasang di PC Ini (6 Slot Hardware)</span>
+          </h4>
+          <span class="text-[11px] text-slate-500">Klik komponen untuk Swap atau Return</span>
+        </div>
+
+        <div id="pc-detail-components-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex items-center justify-end pt-3 border-t border-slate-800">
+        <button
+          type="button"
+          onclick="closeModal('modal-pc-detail')"
+          class="px-5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition"
+        >
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Component Action Modal (Detail, Swap to Another PC, or Return to Inventory) -->
+  <div id="modal-component-action" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel rounded-2xl max-w-lg w-full p-6 border border-slate-700 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-microchip text-pink-400"></i>
+          <span>Detail & Aksi Komponen</span>
+        </h3>
+        <button type="button" onclick="closeModal('modal-component-action')" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <!-- Component Quick Info from Master Item -->
+      <div class="glass-panel rounded-xl p-4 border border-slate-800 flex items-start gap-3">
+        <div id="comp-action-img-container" class="w-14 h-14 rounded-xl bg-slate-900 border border-slate-700 overflow-hidden shrink-0 flex items-center justify-center">
+          <!-- Item image or placeholder -->
+        </div>
+        <div class="min-w-0 flex-1">
+          <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400" id="comp-action-slot-badge">Slot: PSU</span>
+          <h4 class="text-sm font-bold text-white truncate" id="comp-action-name">Power Supply 550W</h4>
+          <p class="text-xs text-slate-400 mt-0.5 line-clamp-2" id="comp-action-desc">-</p>
+          <div class="mt-2 text-[11px] text-indigo-300 font-mono" id="comp-action-current-pc">Terpasang di: PC-FO-01</div>
+        </div>
+      </div>
+
+      <!-- Two Action Choices (Swap vs Return) -->
+      <div class="space-y-3 pt-2">
+        <!-- Action 1: Swap Component to Another PC -->
+        <div class="glass-panel rounded-xl p-4 border border-slate-800 hover:border-indigo-500/40 transition">
+          <h5 class="text-xs font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-shuffle text-indigo-400"></i>
+            <span>Swap Component to Another PC</span>
+          </h5>
+          <p class="text-[11px] text-slate-400 mt-1">
+            Tukar komponen ini dengan komponen dari slot yang sama pada PC lain.
+          </p>
+
+          <div class="mt-3 space-y-2">
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-400 mb-1">Pilih PC Tujuan Swap:</label>
+              <select
+                id="select-swap-target-pc"
+                class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none"
+              >
+                <!-- Populated dynamically with other PCs -->
+              </select>
+            </div>
+            <button
+              type="button"
+              onclick="executeSwapComponent()"
+              class="w-full px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition shadow-md"
+            >
+              Lakukan Swap Komponen
+            </button>
+          </div>
+        </div>
+
+        <!-- Action 2: Return Component to Inventory -->
+        <div class="glass-panel rounded-xl p-4 border border-slate-800 hover:border-amber-500/40 transition">
+          <h5 class="text-xs font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-arrow-rotate-left text-amber-400"></i>
+            <span>Return To Inventory</span>
+          </h5>
+          <p class="text-[11px] text-slate-400 mt-1">
+            Lepas komponen dari PC ini dan kembalikan 1 unit ke Inventory Stock IT Storage.
+          </p>
+
+          <button
+            type="button"
+            onclick="executeReturnComponentToInventory()"
+            class="w-full mt-3 px-4 py-2 rounded-xl bg-slate-800 hover:bg-amber-600/30 text-amber-300 border border-amber-500/40 font-semibold text-xs transition"
+          >
+            Lepas & Kembalikan ke Inventory
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end pt-2 border-t border-slate-800">
+        <button
+          type="button"
+          onclick="closeModal('modal-component-action')"
+          class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700"
+        >
+          Tutup
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 4: Install Component to Empty Slot -->
+  <div id="modal-install-component" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel rounded-2xl max-w-md w-full p-6 border border-slate-700 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-plus text-indigo-400"></i>
+          <span>Pasang Komponen ke PC</span>
+        </h3>
+        <button type="button" onclick="closeModal('modal-install-component')" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div>
+        <span class="text-xs text-slate-400">Target Workstation & Slot:</span>
+        <div class="text-sm font-bold text-white mt-0.5" id="install-comp-target-label">PC-FO-01 &bull; RAM Slot 2</div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-400 mb-1" for="select-install-component">
+          Pilih Komponen dari PC ITEMS (Inventory) <span class="text-rose-400">*</span>
+        </label>
+        <select
+          id="select-install-component"
+          class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none"
+        >
+          <!-- Populated dynamically -->
+        </select>
+        <div id="install-comp-stock-hint" class="text-[11px] text-brand-400 mt-1 font-medium">Stok Tersedia: 0 unit</div>
+      </div>
+
+      <div class="p-3 rounded-xl bg-indigo-950/40 border border-indigo-500/30 text-[11px] text-indigo-300">
+        Pemasangan ini akan memotong 1 unit stok inventory dan tercatat di Motion Analytics serta audit trail.
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+        <button
+          type="button"
+          onclick="closeModal('modal-install-component')"
+          class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700"
+        >
+          Batal
+        </button>
+        <button
+          type="button"
+          onclick="executeInstallComponent()"
+          class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md transition"
+        >
+          Pasang Komponen
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal 5: Assign PC to Department (ADD PC+) -->
+  <div id="modal-dept-add-pc" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+    <div class="glass-panel rounded-2xl max-w-md w-full p-6 border border-slate-700 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-desktop text-indigo-400"></i>
+          <span>Tugaskan PC ke Departemen (ADD PC+)</span>
+        </h3>
+        <button type="button" onclick="closeModal('modal-dept-add-pc')" class="text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div>
+        <span class="text-xs text-slate-400">Tujuan Departemen:</span>
+        <div class="text-base font-extrabold text-amber-300 mt-0.5" id="dept-add-pc-target-dept">Front Office</div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-semibold text-slate-400 mb-1" for="select-dept-add-pc">
+          Pilih PC yang Ready di IT Storage <span class="text-rose-400">*</span>
+        </label>
+        <select
+          id="select-dept-add-pc"
+          class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white focus:border-brand-500 outline-none"
+        >
+          <!-- Populated with Ready in IT Storage PCs -->
+        </select>
+        <p class="text-[11px] text-slate-500 mt-1">
+          Hanya PC dengan status "Ready in IT Storage" yang dapat ditugaskan ke departemen.
+        </p>
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-800">
+        <button
+          type="button"
+          onclick="closeModal('modal-dept-add-pc')"
+          class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 text-xs font-semibold hover:bg-slate-700"
+        >
+          Batal
+        </button>
+        <button
+          type="button"
+          onclick="executeDeptAddPC()"
+          class="px-5 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs font-semibold shadow-md transition"
+        >
+          Pasang ke Departemen
+        </button>
+      </div>
     </div>
   </div>
 

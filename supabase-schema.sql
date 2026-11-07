@@ -255,11 +255,101 @@ ON CONFLICT (id) DO NOTHING;
 -- ==============================================================================
 
 -- ==============================================================================
+-- 9. TABLE: pcs (Daftar Workstation PC & Alokasi Komponen)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.pcs (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  chipset TEXT NOT NULL,
+  department TEXT,
+  status TEXT NOT NULL DEFAULT 'Ready in IT Storage',
+  psu_item_id TEXT REFERENCES public.master_items(id) ON DELETE SET NULL,
+  storage_item_id TEXT REFERENCES public.master_items(id) ON DELETE SET NULL,
+  ram1_item_id TEXT REFERENCES public.master_items(id) ON DELETE SET NULL,
+  ram2_item_id TEXT REFERENCES public.master_items(id) ON DELETE SET NULL,
+  ram3_item_id TEXT REFERENCES public.master_items(id) ON DELETE SET NULL,
+  vga_item_id TEXT REFERENCES public.master_items(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+  created_by TEXT NOT NULL DEFAULT 'IT System',
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+  updated_by TEXT NOT NULL DEFAULT 'IT System'
+);
+
+CREATE INDEX IF NOT EXISTS idx_pcs_name ON public.pcs(name);
+CREATE INDEX IF NOT EXISTS idx_pcs_dept ON public.pcs(department);
+CREATE INDEX IF NOT EXISTS idx_pcs_status ON public.pcs(status);
+
+-- ==============================================================================
+-- 10. TABLE: pc_movements (Audit Trail Pemindahan & Rakit PC Real-Time)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.pc_movements (
+  id TEXT PRIMARY KEY,
+  timestamp TEXT NOT NULL,
+  pc_id TEXT NOT NULL,
+  pc_name TEXT NOT NULL,
+  action_type TEXT NOT NULL,
+  from_location TEXT NOT NULL,
+  to_location TEXT NOT NULL,
+  actor TEXT NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_pc_movements_pc_id ON public.pc_movements(pc_id);
+CREATE INDEX IF NOT EXISTS idx_pc_movements_timestamp ON public.pc_movements(timestamp);
+
+-- ==============================================================================
+-- 11. TABLE: pc_component_movements (Audit Trail Mutasi Komponen PC Real-Time)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.pc_component_movements (
+  id TEXT PRIMARY KEY,
+  timestamp TEXT NOT NULL,
+  pc_id TEXT NOT NULL,
+  pc_name TEXT NOT NULL,
+  slot_name TEXT NOT NULL,
+  item_id TEXT,
+  item_name TEXT NOT NULL,
+  action_type TEXT NOT NULL,
+  related_pc_name TEXT,
+  actor TEXT NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+CREATE INDEX IF NOT EXISTS idx_pc_comp_movements_pc_id ON public.pc_component_movements(pc_id);
+CREATE INDEX IF NOT EXISTS idx_pc_comp_movements_timestamp ON public.pc_component_movements(timestamp);
+
+-- Disable RLS on new tables (Zero-RLS Architecture)
+ALTER TABLE public.pcs DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pc_movements DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.pc_component_movements DISABLE ROW LEVEL SECURITY;
+
+-- ==============================================================================
 -- MIGRATION SCRIPT FOR EXISTING DATABASE (Run if upgrading from older schema)
 -- ==============================================================================
--- Add 'type' column to stock_transactions for Unit Reduction (-) support
+-- 1. Add 'type' column to stock_transactions for Unit Reduction (-) support
 ALTER TABLE public.stock_transactions ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'INBOUND';
 ALTER TABLE public.stock_transactions DROP CONSTRAINT IF EXISTS stock_transactions_type_check;
 ALTER TABLE public.stock_transactions ADD CONSTRAINT stock_transactions_type_check CHECK (type IN ('INBOUND', 'REDUCTION'));
 CREATE INDEX IF NOT EXISTS idx_stock_trans_type ON public.stock_transactions(type);
+
+-- 2. Update department_movements type constraint to support 'TRANSFER TO PC' and 'RETURN FROM PC'
+ALTER TABLE public.department_movements DROP CONSTRAINT IF EXISTS department_movements_type_check;
+ALTER TABLE public.department_movements ADD CONSTRAINT department_movements_type_check CHECK (type IN ('TRANSFER_TO_DEPARTMENT', 'RETURN_TO_INVENTORY', 'TRANSFER TO PC', 'RETURN FROM PC'));
+
+-- 3. Update department_movements department constraint to support '-'
+ALTER TABLE public.department_movements DROP CONSTRAINT IF EXISTS department_movements_department_check;
+ALTER TABLE public.department_movements ADD CONSTRAINT department_movements_department_check CHECK (department IN (
+  'Front Office',
+  'House Keeping',
+  'Engineering',
+  'Human Resource',
+  'F&B Product',
+  'F&B Service',
+  'Wellness',
+  'Sales & Marketing',
+  'Accounting',
+  '-'
+));
+
 
