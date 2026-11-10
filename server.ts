@@ -1,12 +1,24 @@
 /**
- * Hotel IT Inventory Management - Pure Static SPA Server
- * Super-lightweight zero-dependency static server using native Node.js http
+ * Hotel IT Inventory Management - Pure Static SPA Server & Gemini API Proxy
+ * Ultra-lightweight zero-dependency Node.js server
  */
 import http from 'http';
 import fs from 'fs';
 import path from 'path';
 
-const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+// Robust port detection for dev container (port 3000) and Cloud Run production (PORT env)
+const PORT = (() => {
+  const portArgIdx = process.argv.findIndex(arg => arg === '--port' || arg === '-p');
+  if (portArgIdx !== -1 && process.argv[portArgIdx + 1]) {
+    return parseInt(process.argv[portArgIdx + 1], 10);
+  }
+  if (process.env.APPLET_ID) {
+    // In AI Studio dev container, Nginx listens on 8080 and proxies to 3000
+    return 3000;
+  }
+  return process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
+})();
+
 const ROOT = process.cwd();
 
 const MIME_TYPES: Record<string, string> = {
@@ -26,11 +38,124 @@ const MIME_TYPES: Record<string, string> = {
   '.ico': 'image/x-icon'
 };
 
-const server = http.createServer((req, res) => {
-  let reqPath = req.url?.split('?')[0] || '/';
-  if (reqPath === '/') reqPath = '/index.html';
+const server = http.createServer(async (req, res) => {
+  // CORS Headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-gemini-api-key');
 
-  let filePath = path.join(ROOT, reqPath);
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+
+  const parsedUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+  const reqPath = parsedUrl.pathname;
+
+  // Server-side Gemini API endpoints (chat & streaming proxy)
+  if ((reqPath === '/api/gemini/chat' || reqPath === '/api/gemini/stream') && req.method === 'POST') {
+    let body = '';
+    req.on('data', chunk => { body += chunk; });
+    req.on('end', async () => {
+      try {
+        const payload = JSON.parse(body || '{}');
+        const apiKey = payload.apiKey || (req.headers['x-gemini-api-key'] as string) || process.env.GEMINI_API_KEY;
+
+        if (!apiKey) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: {
+              message: 'GEMINI_API_KEY is not configured. Please supply an API key in Settings or server environment.'
+            }
+          }));
+          return;
+        }
+
+        let model = payload.model || 'gemini-3.8-flash';
+        model = model.replace(/^models\//, '');
+        if (model === 'gemini-2.5-flash' || model === 'gemini-2.5-flash-preview' || model === 'gemini-2.0-flash' || model === 'gemini-1.5-flash') {
+          model = 'gemini-3.8-flash';
+        }
+
+        const systemText = payload.systemInstruction || payload.system_instruction;
+        const systemInstructionObj = systemText
+          ? (typeof systemText === 'string' ? { parts: [{ text: systemText }] } : systemText)
+          : undefined;
+
+        const isStream = reqPath === '/api/gemini/stream' || payload.stream === true;
+        const apiMethod = isStream ? 'streamGenerateContent' : 'generateContent';
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:${apiMethod}?key=${encodeURIComponent(apiKey)}`;
+
+        const geminiRes = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': 'aistudio-build'
+          },
+          body: JSON.stringify({
+            contents: payload.contents || [],
+            system_instruction: systemInstructionObj,
+            generationConfig: payload.generationConfig
+          })
+        });
+
+        if (isStream) {
+          res.writeHead(geminiRes.status, {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            'Connection': 'keep-alive'
+          });
+          if (geminiRes.body && geminiRes.body.getReader) {
+            const reader = geminiRes.body.getReader();
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) { res.end(); break; }
+              res.write(value);
+            }
+          } else {
+            const text = await geminiRes.text();
+            res.end(text);
+          }
+          return;
+        }
+
+        const data = await geminiRes.json();
+        res.writeHead(geminiRes.status, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify(data));
+      } catch (err: any) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: {
+            message: err?.message || 'Internal server error while connecting to Gemini API'
+          }
+        }));
+      }
+    });
+    return;
+  }
+
+  // Gemini API configuration status endpoint
+  if (reqPath === '/api/gemini/status' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      hasServerKey: !!process.env.GEMINI_API_KEY,
+      defaultModel: 'gemini-3.8-flash',
+      status: 'ok'
+    }));
+    return;
+  }
+
+  // Health check endpoint for Cloud Run and container health monitors
+  if (reqPath === '/healthz' || reqPath === '/api/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ status: 'ok', uptime: process.uptime() }));
+    return;
+  }
+
+  // Static file serving
+  let targetPath = reqPath === '/' ? '/index.html' : reqPath;
+  let filePath = path.join(ROOT, targetPath);
 
   // Prevent directory traversal
   if (!filePath.startsWith(ROOT)) {
@@ -39,7 +164,7 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // SPA fallback to index.html if file doesn't exist or is a directory
+  // SPA fallback
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
     filePath = path.join(ROOT, 'index.html');
   }
@@ -53,14 +178,11 @@ const server = http.createServer((req, res) => {
       res.end('Internal Server Error');
       return;
     }
-    res.writeHead(200, {
-      'Content-Type': contentType,
-      'Access-Control-Allow-Origin': '*'
-    });
+    res.writeHead(200, { 'Content-Type': contentType });
     res.end(content);
   });
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Pure Static SPA Server running at http://0.0.0.0:${PORT}`);
+  console.log(`Server running at http://0.0.0.0:${PORT}`);
 });
