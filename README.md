@@ -229,18 +229,3 @@ Proyek telah dilengkapi dengan konfigurasi `vercel.json` statis:
   2. Buka menu **Settings & BaaS** di dalam aplikasi, pastikan Supabase URL dan Anon Key sudah benar, lalu klik **Save & Re-sync Data**.
 - **Ekspor Excel tidak mendownload**:
   Pastikan peramban Anda tidak memblokir unduhan otomatis (*pop-up blocker*). SheetJS berjalan langsung di memori browser dan akan memicu dialog simpan file `.xlsx`.
-
-
-## Purchase Order otomatis menambah Inventory
-
-Setelah deploy versi ini, jalankan SQL migration `supabase/migrations/20261110_po_auto_inventory.sql`
-di Supabase Dashboard → SQL Editor. Migration menambahkan `source_po_id` pada
-`stock_transactions`, unique index untuk mencegah penerimaan ganda, dan RPC
-`receive_purchase_order_into_inventory`.
-
-Saat status PO berubah menjadi `SUDAH DATANG`, aplikasi membuat satu transaksi
-`INBOUND` di Inventory sesuai `item_id` dan `quantity` PO. Perubahan stok
-mengikuti ledger `stock_transactions` yang sudah digunakan aplikasi, sehingga
-perhitungan stok, riwayat, laporan, dan Supabase Realtime tetap konsisten.
-Jangan jalankan ulang schema awal yang berisi `DROP TABLE`; cukup jalankan file
-migration di atas pada database yang sudah berisi data.

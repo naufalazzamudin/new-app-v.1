@@ -25,9 +25,7 @@ const STORAGE_KEYS = {
   SUPABASE_URL: 'HOTEL_IT_SUPABASE_URL',
   SUPABASE_KEY: 'HOTEL_IT_SUPABASE_KEY',
   AUTH_USER: 'HOTEL_IT_AUTH_USER',
-  DEMO_DATA: 'HOTEL_IT_DATA_CACHE',
-  GEMINI_API_KEY: 'HOTEL_IT_GEMINI_API_KEY',
-  GEMINI_MODEL: 'HOTEL_IT_GEMINI_MODEL'
+  DEMO_DATA: 'HOTEL_IT_DATA_CACHE'
 };
 
 // Default fallback Supabase credentials (from Redeploy Auth)
@@ -43,8 +41,8 @@ function formatCategoryBadge(category) {
 function formatPOStatusBadge(status) {
   const isArrived = status === 'SUDAH DATANG';
   return isArrived
-    ? `<span class="badge-pill px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 shrink-0"></span>SUDAH DATANG</span>`
-    : `<span class="badge-pill px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30"><span class="w-1.5 h-1.5 rounded-full bg-blue-400 mr-1.5 shrink-0"></span>BELUM DATANG</span>`;
+    ? `<span class="badge-pill px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>SUDAH DATANG <span class="text-[9px] text-emerald-300 font-semibold bg-emerald-950/80 px-1.5 py-0.5 rounded border border-emerald-500/40">Tersinkron</span></span>`
+    : `<span class="badge-pill px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/30 inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-blue-400 shrink-0"></span>BELUM DATANG</span>`;
 }
 
 function formatStockStatusBadge(availableStock) {
@@ -400,6 +398,7 @@ async function syncAllFromSupabaseQuietly() {
       if (pcMovRes && pcMovRes.data) state.pcMovements = pcMovRes.data;
       if (pcCompMovRes && pcCompMovRes.data) state.pcComponentMovements = pcCompMovRes.data;
 
+      syncExistingArrivedPOs();
       localStorage.setItem(STORAGE_KEYS.DEMO_DATA, JSON.stringify(state));
       refreshAllViews();
     }
@@ -490,6 +489,7 @@ async function loadApplicationData() {
           state.pcComponentMovements = seeds.pcComponentMovements;
         }
 
+        syncExistingArrivedPOs();
         localStorage.setItem(STORAGE_KEYS.DEMO_DATA, JSON.stringify(state));
         setupSupabaseRealtime();
         refreshAllViews();
@@ -524,6 +524,7 @@ async function loadApplicationData() {
     state.pcComponentMovements = seeds.pcComponentMovements;
   }
 
+  syncExistingArrivedPOs();
   refreshAllViews();
 }
 
@@ -674,14 +675,8 @@ function toggleMobileSidebar(forceState) {
 // 7. VIEW ROUTING & SPA TAB MANAGEMENT
 // ==============================================================================
 function navigateTo(viewId) {
-  const previousView = activeView;
   activeView = viewId;
   toggleMobileSidebar(false);
-
-  // Privacy Rule: Leaving RattaBot chat view immediately wipes the in-memory chat session
-  if (previousView === 'rattabot' && viewId !== 'rattabot') {
-    onExitRattaBotView();
-  }
 
   document.querySelectorAll('.app-view').forEach(el => {
     el.classList.add('hidden');
@@ -714,13 +709,6 @@ function navigateTo(viewId) {
   if (viewId === 'purchase-orders') renderPOTable();
   if (viewId === 'preloved') renderPrelovedTable();
   if (viewId === 'monthly') renderMonthlyView();
-  if (viewId === 'settings') {
-    initSettingsForm();
-    initGeminiSettings();
-  }
-  if (viewId === 'rattabot') {
-    onEnterRattaBotView();
-  }
 }
 
 function refreshAllViews() {
@@ -1369,16 +1357,28 @@ function openItemInboundHistoryModal(itemId) {
       empty?.classList.add('hidden');
       tbody.innerHTML = txs.map((tx, idx) => {
         const isRed = isReductionTx(tx);
-        const typeBadge = isRed
-          ? `<span class="badge-pill px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30 whitespace-nowrap"><i class="fa-solid fa-minus text-[9px] mr-1"></i>Pengurangan</span>`
-          : `<span class="badge-pill px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 whitespace-nowrap"><i class="fa-solid fa-plus text-[9px] mr-1"></i>Stok Masuk</span>`;
+        const isPO = Boolean(tx.po_id || (tx.id && tx.id.startsWith('tx-po-')) || (typeof tx.remark === 'string' && tx.remark.includes('[PO SUDAH DATANG]')));
+
+        let typeBadge;
+        if (isRed) {
+          typeBadge = `<span class="badge-pill px-2 py-0.5 rounded text-[10px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/30 whitespace-nowrap"><i class="fa-solid fa-minus text-[9px] mr-1"></i>Pengurangan</span>`;
+        } else if (isPO) {
+          typeBadge = `<span class="badge-pill px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 whitespace-nowrap"><i class="fa-solid fa-truck-ramp-box text-[9px] mr-1"></i>PO Datang</span>`;
+        } else {
+          typeBadge = `<span class="badge-pill px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/10 text-cyan-400 border border-cyan-500/30 whitespace-nowrap"><i class="fa-solid fa-plus text-[9px] mr-1"></i>Stok Masuk</span>`;
+        }
+
         const qtyDisplay = isRed
           ? `<span class="font-bold text-rose-400 font-mono">-${tx.quantity}</span>`
-          : `<span class="font-bold text-cyan-400 font-mono">+${tx.quantity}</span>`;
+          : (isPO
+              ? `<span class="font-bold text-emerald-400 font-mono">+${tx.quantity}</span>`
+              : `<span class="font-bold text-cyan-400 font-mono">+${tx.quantity}</span>`);
 
         let displayRemark = escapeHtml(tx.remark || '-');
         if (displayRemark.startsWith('[PENGURANGAN STOK]')) {
           displayRemark = displayRemark.replace('[PENGURANGAN STOK]', '<span class="text-rose-400 font-semibold">[PENGURANGAN]</span>');
+        } else if (displayRemark.startsWith('[PO SUDAH DATANG]')) {
+          displayRemark = displayRemark.replace('[PO SUDAH DATANG]', '<span class="text-emerald-400 font-semibold">[PO SUDAH DATANG]</span>');
         }
 
         return `
@@ -1907,6 +1907,146 @@ function handlePOMasterItemSelect() {
   if (infoCode) infoCode.textContent = item.item_code || '-';
 }
 
+// ==============================================================================
+// 12.1 PURCHASE ORDER -> INVENTORY REALTIME STOCK SYNC ENGINE
+// ==============================================================================
+function applyPOArrivalToInventory(po, customArrivalDate = null) {
+  if (!po) return null;
+
+  // 1. Resolve matching master item
+  let item = state.masterItems.find(i => i.id === po.item_id);
+  if (!item && po.item_name) {
+    item = state.masterItems.find(i => i.item_name.toLowerCase() === po.item_name.toLowerCase());
+  }
+
+  // If item is not in masterItems yet, auto-create it so it appears in inventory
+  if (!item) {
+    item = {
+      id: po.item_id || `item-po-${po.id}-${Date.now()}`,
+      item_name: po.item_name,
+      category: po.category || 'PC ITEMS',
+      item_code: `SKU-${(po.category || 'PO').substring(0, 3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
+      remark: `Auto-created from PO ${po.po_number || ''}`,
+      photo_url: po.photo_url || null,
+      created_at: new Date().toISOString()
+    };
+    state.masterItems.unshift(item);
+    if (isLiveSupabase && supabaseClient) {
+      supabaseClient.from('master_items').insert(item).then(() => {});
+    }
+  }
+
+  const arrivalDate = customArrivalDate || po.date_arrival || new Date().toISOString().split('T')[0];
+  po.date_arrival = arrivalDate;
+  po.status = 'SUDAH DATANG';
+  po.item_id = item.id;
+  po.updated_at = new Date().toISOString();
+
+  const txId = po.inbound_tx_id || `tx-po-${po.id}`;
+  const existingIdx = state.stockTransactions.findIndex(
+    t => t.id === txId || t.id === `tx-po-${po.id}` || (t.po_id && t.po_id === po.id)
+  );
+
+  const remark = `[PO SUDAH DATANG] ${po.po_number || 'PO'}: ${item.item_name} (+${po.quantity} unit)${po.vendor ? ' dari ' + po.vendor : ''}${po.for_use ? ' [Peruntukan: ' + po.for_use + ']' : ''}`.trim();
+
+  let targetTx = null;
+  let isNew = false;
+
+  if (existingIdx !== -1) {
+    targetTx = state.stockTransactions[existingIdx];
+    targetTx.item_id = item.id;
+    targetTx.quantity = Number(po.quantity) || 1;
+    targetTx.transaction_date = arrivalDate;
+    targetTx.remark = remark;
+    po.inbound_tx_id = targetTx.id;
+  } else {
+    targetTx = {
+      id: txId,
+      po_id: po.id,
+      item_id: item.id,
+      transaction_date: arrivalDate,
+      quantity: Number(po.quantity) || 1,
+      remark: remark,
+      created_by: currentUser ? currentUser.email : (po.created_by || 'admin@hotel.com'),
+      created_at: new Date().toISOString()
+    };
+    po.inbound_tx_id = targetTx.id;
+    state.stockTransactions.unshift(targetTx);
+    isNew = true;
+  }
+
+  // Supabase sync
+  if (isLiveSupabase && supabaseClient) {
+    const poPayload = {
+      status: po.status,
+      date_arrival: po.date_arrival,
+      updated_at: po.updated_at,
+      updated_by: currentUser ? currentUser.email : 'admin@hotel.com'
+    };
+    supabaseClient.from('purchase_orders').update(poPayload).eq('id', po.id).then(() => {});
+
+    const txPayload = {
+      id: targetTx.id,
+      item_id: targetTx.item_id,
+      transaction_date: targetTx.transaction_date,
+      quantity: Number(targetTx.quantity) || 1,
+      type: 'INBOUND',
+      remark: targetTx.remark,
+      created_by: targetTx.created_by || 'admin@hotel.com',
+      created_at: targetTx.created_at || new Date().toISOString()
+    };
+    supabaseClient.from('stock_transactions').upsert(txPayload).then(() => {});
+  }
+
+  return { item, tx: targetTx, isNew };
+}
+
+function revertPOArrivalFromInventory(po) {
+  if (!po) return;
+  const txId = po.inbound_tx_id || `tx-po-${po.id}`;
+  state.stockTransactions = state.stockTransactions.filter(
+    t => t.id !== txId && t.id !== `tx-po-${po.id}` && t.po_id !== po.id
+  );
+
+  if (isLiveSupabase && supabaseClient) {
+    supabaseClient.from('stock_transactions').delete().eq('id', txId).then(() => {});
+    supabaseClient.from('purchase_orders').update({
+      status: po.status,
+      date_arrival: null,
+      updated_at: new Date().toISOString(),
+      updated_by: currentUser ? currentUser.email : 'admin@hotel.com'
+    }).eq('id', po.id).then(() => {});
+  }
+
+  po.inbound_tx_id = null;
+  po.date_arrival = null;
+}
+
+function syncExistingArrivedPOs() {
+  if (!state.purchaseOrders || !state.stockTransactions) return;
+
+  let addedCount = 0;
+  state.purchaseOrders.forEach(po => {
+    if (po.status === 'SUDAH DATANG') {
+      const txId = po.inbound_tx_id || `tx-po-${po.id}`;
+      const exists = state.stockTransactions.some(t =>
+        t.id === txId ||
+        t.id === `tx-po-${po.id}` ||
+        (t.po_id && t.po_id === po.id)
+      );
+
+      if (!exists) {
+        applyPOArrivalToInventory(po);
+        addedCount++;
+      }
+    }
+  });
+
+  if (addedCount > 0) {
+    persistState();
+  }
+}
+
 function openModalPO(editId = null) {
   const form = document.getElementById('form-po');
   form.reset();
@@ -1971,6 +2111,7 @@ async function handlePOSubmit(e) {
   if (editId) {
     const existing = state.purchaseOrders.find(p => p.id === editId);
     if (existing) {
+      const prevStatus = existing.status;
       existing.item_id = item.id;
       existing.item_name = itemName;
       existing.category = category;
@@ -1982,14 +2123,24 @@ async function handlePOSubmit(e) {
       existing.remarks = remarks || null;
       existing.updated_at = new Date().toISOString();
 
-      if (status === 'SUDAH DATANG' && !existing.date_arrival) {
-        existing.date_arrival = new Date().toISOString().split('T')[0];
+      if (status === 'SUDAH DATANG') {
+        if (!existing.date_arrival) {
+          existing.date_arrival = new Date().toISOString().split('T')[0];
+        }
+        applyPOArrivalToInventory(existing);
+      } else if (prevStatus === 'SUDAH DATANG' && status !== 'SUDAH DATANG') {
+        revertPOArrivalFromInventory(existing);
       }
 
       if (isLiveSupabase && supabaseClient) {
         await supabaseClient.from('purchase_orders').update(existing).eq('id', editId);
       }
-      showToast('Purchase Order berhasil diperbarui!', 'success');
+      showToast(
+        status === 'SUDAH DATANG'
+          ? `Purchase Order diperbarui! Stok +${qty} unit otomatis tercatat di Inventory & Histori Stok Masuk.`
+          : 'Purchase Order berhasil diperbarui!',
+        'success'
+      );
     }
   } else {
     const newPO = {
@@ -2011,15 +2162,25 @@ async function handlePOSubmit(e) {
       created_at: new Date().toISOString()
     };
 
+    if (status === 'SUDAH DATANG') {
+      applyPOArrivalToInventory(newPO);
+    }
+
     if (isLiveSupabase && supabaseClient) {
       await supabaseClient.from('purchase_orders').insert(newPO);
     }
     state.purchaseOrders.unshift(newPO);
     logActivity(`PO: ${itemName} (${qty} units)`, category, 'Added', 'PURCHASE ORDER');
-    showToast('Purchase Order baru berhasil disimpan!', 'success');
+    showToast(
+      status === 'SUDAH DATANG'
+        ? `PO baru tersimpan! Status SUDAH DATANG: +${qty} unit otomatis masuk ke Inventory Stock.`
+        : 'Purchase Order baru berhasil disimpan!',
+      'success'
+    );
   }
 
   persistState();
+  refreshAllViews();
   closeModal('modal-po');
 }
 
@@ -2217,7 +2378,10 @@ function renderPOTable() {
         </td>
         <td class="py-3 px-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">${po.date_order}</td>
         <td class="py-3 px-4 font-mono text-[11px] text-slate-400 whitespace-nowrap">${po.date_arrival || '-'}</td>
-        <td class="py-3 px-4 text-center font-mono font-bold text-white whitespace-nowrap">${po.quantity}</td>
+        <td class="py-3 px-4 text-center whitespace-nowrap">
+          <span class="font-mono font-bold text-white px-2 py-0.5 rounded bg-slate-900 border border-slate-700/80">${po.quantity}</span>
+          ${isArrived ? `<span class="block text-[10px] text-emerald-400 font-semibold mt-0.5"><i class="fa-solid fa-arrow-down mr-0.5"></i>+${po.quantity} Masuk Stok</span>` : ''}
+        </td>
         <td class="py-3 px-4 text-slate-300 min-w-[150px]">${escapeHtml(po.for_use)}</td>
         <td class="py-3 px-4 whitespace-nowrap">${formatPOStatusBadge(po.status)}</td>
         <td class="py-3 px-4 text-right whitespace-nowrap">
@@ -2226,12 +2390,21 @@ function renderPOTable() {
               <button
                 type="button"
                 onclick="markPOArrived('${po.id}')"
-                title="Mark Arrived"
-                class="p-1.5 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white transition text-xs shrink-0"
+                title="Tandai Sudah Datang (Otomatis Masuk ke Inventory & Histori Stok Masuk)"
+                class="px-2.5 py-1 rounded-lg bg-emerald-600/20 hover:bg-emerald-600 text-emerald-300 hover:text-white transition text-xs font-semibold flex items-center gap-1 shrink-0 border border-emerald-500/30"
               >
                 <i class="fa-solid fa-check"></i>
+                <span>Terima</span>
               </button>
-            ` : ''}
+            ` : `
+              <span
+                class="px-2 py-1 rounded-lg bg-emerald-500/10 text-emerald-400 text-[11px] font-semibold border border-emerald-500/20 flex items-center gap-1 shrink-0"
+                title="Barang telah tiba dan kuantitas order telah otomatis ditambahkan ke stok inventory"
+              >
+                <i class="fa-solid fa-boxes-stacked text-xs"></i>
+                <span>Tersinkron</span>
+              </span>
+            `}
             <button
               type="button"
               onclick="openModalPO('${po.id}')"
@@ -2259,21 +2432,27 @@ async function markPOArrived(poId) {
   const po = state.purchaseOrders.find(p => p.id === poId);
   if (!po) return;
 
-  po.status = 'SUDAH DATANG';
-  po.date_arrival = new Date().toISOString().split('T')[0];
-  po.updated_at = new Date().toISOString();
+  const result = applyPOArrivalToInventory(po);
+  if (!result) return;
 
-  if (isLiveSupabase && supabaseClient) {
-    await supabaseClient.from('purchase_orders').update(po).eq('id', poId);
-  }
-
-  logActivity(`PO Received: ${po.item_name}`, po.category, 'Received', 'PURCHASE ORDER');
+  logActivity(`PO Received: ${result.item.item_name} (+${po.quantity} unit masuk inventory)`, po.category, 'Received', 'PURCHASE ORDER');
   persistState();
-  showToast(`Status PO ${po.item_name} ditandai SUDAH DATANG!`, 'success');
+  refreshAllViews();
+
+  showToast(`Barang PO "${result.item.item_name}" status SUDAH DATANG! Otomatis tertambah +${po.quantity} unit ke Inventory & Histori Stok Masuk.`, 'success');
 }
 
 async function confirmDeletePO(poId, itemName) {
   if (!confirm(`Hapus Purchase Order "${itemName}"?`)) return;
+
+  const po = state.purchaseOrders.find(p => p.id === poId);
+  if (po && (po.status === 'SUDAH DATANG' || po.inbound_tx_id)) {
+    const txId = po.inbound_tx_id || `tx-po-${po.id}`;
+    state.stockTransactions = state.stockTransactions.filter(t => t.id !== txId && t.po_id !== poId);
+    if (isLiveSupabase && supabaseClient) {
+      supabaseClient.from('stock_transactions').delete().eq('id', txId).then(() => {});
+    }
+  }
 
   if (isLiveSupabase && supabaseClient) {
     await supabaseClient.from('purchase_orders').delete().eq('id', poId);
@@ -2281,6 +2460,7 @@ async function confirmDeletePO(poId, itemName) {
 
   state.purchaseOrders = state.purchaseOrders.filter(p => p.id !== poId);
   persistState();
+  refreshAllViews();
   showToast('Purchase Order berhasil dihapus.', 'info');
 }
 
@@ -3016,7 +3196,6 @@ async function handleLogout() {
 
   currentUser = null;
   localStorage.removeItem(STORAGE_KEYS.AUTH_USER);
-  clearRattaBotSession(false);
 
   document.getElementById('app-shell')?.classList.add('hidden');
   document.getElementById('login-view')?.classList.remove('hidden');
@@ -3040,8 +3219,6 @@ function initSettingsForm() {
   if (keyInput) keyInput.value = currentKey;
   if (configUrl) configUrl.value = currentUrl;
   if (configKey) configKey.value = currentKey;
-
-  initGeminiSettings();
 }
 
 function saveSettingsCredentials() {
@@ -4771,6 +4948,9 @@ window.updateReturnItemOptions = updateReturnItemOptions;
 window.updateReturnAvailableStock = updateReturnAvailableStock;
 
 window.markPOArrived = markPOArrived;
+window.applyPOArrivalToInventory = applyPOArrivalToInventory;
+window.revertPOArrivalFromInventory = revertPOArrivalFromInventory;
+window.syncExistingArrivedPOs = syncExistingArrivedPOs;
 window.confirmDeleteMasterItem = confirmDeleteMasterItem;
 window.confirmDeletePO = confirmDeletePO;
 window.confirmDeletePreloved = confirmDeletePreloved;
@@ -4797,1196 +4977,16 @@ window.toggleMobileSidebar = toggleMobileSidebar;
 window.updateHeroGreeting = updateHeroGreeting;
 window.getGreetingPrefix = getGreetingPrefix;
 window.startRealTimeDeviceClock = startRealTimeDeviceClock;
+window.setupSupabaseRealtime = setupSupabaseRealtime;
+
 // ==============================================================================
-// 21. RATTABOT AI COPILOT & AUTONOMOUS CRUD ENGINE (GEMINI REST)
+// 21. EVENT LISTENERS & APPLICATION BOOTSTRAP
 // ==============================================================================
-const DEFAULT_GEMINI_MODEL = 'gemini-3.8-flash';
-
-// Strictly in-memory chat session: never stored in LocalStorage or remote database!
-let rattabotChatHistory = [];
-let rattabotTimerInterval = null;
-let rattabotSecondsRemaining = 300; // 5 minutes inactivity countdown
-let rattabotPendingAction = null;
-let isRattaBotBusy = false;
-
-function getGeminiApiKey() {
-  return (localStorage.getItem(STORAGE_KEYS.GEMINI_API_KEY) || '').trim();
-}
-
-function getGeminiModel() {
-  const model = localStorage.getItem(STORAGE_KEYS.GEMINI_MODEL) || DEFAULT_GEMINI_MODEL;
-  if (model === 'gemini-2.5-flash' || model === 'gemini-2.5-flash-preview' || model === 'gemini-2.0-flash' || model === 'gemini-1.5-flash') {
-    return DEFAULT_GEMINI_MODEL;
-  }
-  return model;
-}
-
-let hasServerGeminiKey = false;
-
-async function checkServerGeminiStatus() {
-  try {
-    const res = await fetch('/api/gemini/status');
-    if (res.ok) {
-      const data = await res.json();
-      hasServerGeminiKey = !!data.hasServerKey;
-      initGeminiSettings();
-    }
-  } catch (e) {
-    // server status optional
-  }
-}
-
-function initGeminiSettings() {
-  const keyInput = document.getElementById('settings-gemini-key');
-  const modelSelect = document.getElementById('settings-gemini-model');
-  const statusBadge = document.getElementById('gemini-status-badge');
-  const statusText = document.getElementById('gemini-status-text');
-
-  const savedKey = getGeminiApiKey();
-  const savedModel = getGeminiModel();
-
-  if (keyInput) keyInput.value = savedKey;
-  if (modelSelect) modelSelect.value = savedModel;
-
-  if (savedKey || hasServerGeminiKey) {
-    if (statusBadge) {
-      statusBadge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-pink-500/10 text-pink-300 border border-pink-500/30 flex items-center gap-1.5';
-    }
-    if (statusText) statusText.textContent = savedKey ? '🌸 RattaBot Active (User Key)' : '🌸 RattaBot Active (Server Key)';
-  } else {
-    if (statusBadge) {
-      statusBadge.className = 'px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1.5';
-    }
-    if (statusText) statusText.textContent = 'API Key Belum Diisi';
-  }
-}
-
-function saveGeminiSettings() {
-  const keyInput = document.getElementById('settings-gemini-key');
-  const modelSelect = document.getElementById('settings-gemini-model');
-  const key = (keyInput?.value || '').trim();
-  const model = modelSelect?.value || DEFAULT_GEMINI_MODEL;
-
-  if (!key) {
-    showToast('Silahkan masukkan Google Gemini API Key Anda!', 'error');
-    return;
-  }
-
-  localStorage.setItem(STORAGE_KEYS.GEMINI_API_KEY, key);
-  localStorage.setItem(STORAGE_KEYS.GEMINI_MODEL, model);
-  initGeminiSettings();
-  showToast('Pengaturan RattaBot AI berhasil disimpan! RattaBot kini aktif.', 'success');
-}
-
-function clearGeminiSettings() {
-  localStorage.removeItem(STORAGE_KEYS.GEMINI_API_KEY);
-  localStorage.removeItem(STORAGE_KEYS.GEMINI_MODEL);
-  initGeminiSettings();
-  showToast('API Key telah dihapus.', 'info');
-}
-
-function toggleGeminiKeyVisibility() {
-  const input = document.getElementById('settings-gemini-key');
-  const btn = document.getElementById('btn-toggle-gemini-key');
-  if (!input) return;
-  if (input.type === 'password') {
-    input.type = 'text';
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
-  } else {
-    input.type = 'password';
-    if (btn) btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
-  }
-}
-
-async function testGeminiConnection() {
-  const keyInput = document.getElementById('settings-gemini-key');
-  const modelSelect = document.getElementById('settings-gemini-model');
-  const key = (keyInput?.value || getGeminiApiKey()).trim();
-  const model = modelSelect?.value || getGeminiModel();
-
-  if (!key && !hasServerGeminiKey) {
-    showToast('Masukkan API Key terlebih dahulu untuk melakukan test koneksi!', 'error');
-    return;
-  }
-
-  const btn = document.getElementById('btn-test-gemini');
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-amber-400"></i> Testing...';
-  }
-
-  try {
-    const response = await fetch('/api/gemini/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(key ? { 'x-gemini-api-key': key } : {})
-      },
-      body: JSON.stringify({
-        apiKey: key || undefined,
-        model: model,
-        contents: [{
-          role: 'user',
-          parts: [{ text: 'Halo! Jawab singkat dalam maksimal 5 kata bahwa sistem RattaBot aktif dan siap.' }]
-        }]
-      })
-    });
-
-    const data = await response.json();
-    if (!response.ok || data.error) {
-      const errMsg = data.error?.message || (typeof data.error === 'string' ? data.error : `HTTP ${response.status}`);
-      showToast(`Koneksi Gagal: ${errMsg}`, 'error');
-    } else {
-      const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Aktif dan siap digunakan.';
-      showToast(`Koneksi Sukses! RattaBot (${model}): "${reply.trim()}"`, 'success');
-      if (key) {
-        localStorage.setItem(STORAGE_KEYS.GEMINI_API_KEY, key);
-      }
-      localStorage.setItem(STORAGE_KEYS.GEMINI_MODEL, model);
-      initGeminiSettings();
-    }
-  } catch (err) {
-    showToast(`Error test koneksi: ${err.message}`, 'error');
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-bolt text-amber-400"></i><span>Test API Connection</span>';
-    }
-  }
-}
-
-// -----------------------------------------------------------------------------
-// RATTABOT SESSION & PRIVACY ENGINE
-// -----------------------------------------------------------------------------
-function onEnterRattaBotView() {
-  const apiKey = getGeminiApiKey();
-  const alertEl = document.getElementById('rattabot-no-key-alert');
-  const chatContainerEl = document.getElementById('rattabot-chat-container');
-  const modelTag = document.getElementById('rattabot-model-tag');
-
-  if (modelTag) modelTag.textContent = getGeminiModel();
-
-  if (!apiKey && !hasServerGeminiKey) {
-    if (alertEl) alertEl.classList.remove('hidden');
-    if (chatContainerEl) chatContainerEl.classList.add('hidden');
-    stopRattaBotInactivityTimer();
-    return;
-  }
-
-  if (alertEl) alertEl.classList.add('hidden');
-  if (chatContainerEl) chatContainerEl.classList.remove('hidden');
-
-  // Start 5-minute inactivity countdown
-  startRattaBotInactivityTimer();
-
-  // If chat is fresh, seed with greeting
-  if (rattabotChatHistory.length === 0) {
-    const userName = getGreetingPrefix(currentUser?.email) || 'Admin';
-    rattabotChatHistory.push({
-      role: 'assistant',
-      text: `Halo ${userName}! Saya RattaBot 🌸😊, asisten pintar Hotel IT Operational Hub. Aktivitas apa yang ingin anda lakukan hari ini? Anda bisa leluasa bertanya tentang fitur, stok, departemen, atau memberi saya perintah untuk menambah master item, mencatat barang masuk/keluar, transfer departemen, buat PO, catat hardware rusak, hingga rakit & kelola Workstation PC!`,
-      timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    });
-  }
-
-  renderRattaBotMessages();
-  setTimeout(() => {
-    document.getElementById('rattabot-input-text')?.focus();
-  }, 100);
-}
-
-function onExitRattaBotView() {
-  clearRattaBotSession(false);
-}
-
-function startRattaBotInactivityTimer() {
-  stopRattaBotInactivityTimer();
-  rattabotSecondsRemaining = 300; // 5 minutes
-  updateRattaBotTimerDisplay();
-
-  rattabotTimerInterval = setInterval(() => {
-    rattabotSecondsRemaining -= 1;
-    updateRattaBotTimerDisplay();
-
-    if (rattabotSecondsRemaining <= 0) {
-      stopRattaBotInactivityTimer();
-      clearRattaBotSession(true);
-    }
-  }, 1000);
-}
-
-function stopRattaBotInactivityTimer() {
-  if (rattabotTimerInterval) {
-    clearInterval(rattabotTimerInterval);
-    rattabotTimerInterval = null;
-  }
-}
-
-function resetRattaBotInactivityTimer() {
-  rattabotSecondsRemaining = 300;
-  updateRattaBotTimerDisplay();
-}
-
-function updateRattaBotTimerDisplay() {
-  const display = document.getElementById('rattabot-timer-display');
-  if (!display) return;
-  const mins = Math.floor(Math.max(0, rattabotSecondsRemaining) / 60);
-  const secs = Math.max(0, rattabotSecondsRemaining) % 60;
-  display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-}
-
-function clearRattaBotSession(isTimedOut = false) {
-  rattabotChatHistory = [];
-  rattabotPendingAction = null;
-  hideRattaBotConfirmationCard();
-  hideRattaBotProcessingBanner();
-
-  const timeoutBanner = document.getElementById('rattabot-timeout-banner');
-  if (timeoutBanner) {
-    if (isTimedOut) {
-      timeoutBanner.classList.remove('hidden');
-    } else {
-      timeoutBanner.classList.add('hidden');
-    }
-  }
-
-  // If user is currently looking at rattabot view, re-seed welcome greeting
-  if (activeView === 'rattabot' && getGeminiApiKey()) {
-    const userName = getGreetingPrefix(currentUser?.email) || 'Admin';
-    rattabotChatHistory.push({
-      role: 'assistant',
-      text: `Halo ${userName}! Saya RattaBot 🌸😊, asisten pintar Hotel IT Operational Hub. Aktivitas apa yang ingin anda lakukan hari ini? Anda bisa leluasa bertanya tentang sistem atau memberi saya perintah untuk menambah, memindahkan, atau mengedit data!`,
-      timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    });
-    renderRattaBotMessages();
-    startRattaBotInactivityTimer();
-  } else {
-    stopRattaBotInactivityTimer();
-  }
-}
-
-function resetRattaBotChat(userInitiated = false) {
-  clearRattaBotSession(false);
-  if (userInitiated) {
-    showToast('Sesi chat RattaBot berhasil dibersihkan.', 'info');
-  }
-}
-
-// -----------------------------------------------------------------------------
-// RATTABOT UI RENDERING & MARKDOWN PARSER
-// -----------------------------------------------------------------------------
-function renderRattaBotMessages() {
-  const list = document.getElementById('rattabot-messages-list');
-  if (!list) return;
-
-  if (rattabotChatHistory.length === 0) {
-    list.innerHTML = `
-      <div class="h-full flex flex-col items-center justify-center text-center p-8 text-slate-500">
-        <div class="w-16 h-16 rounded-3xl bg-pink-500/10 text-pink-400 flex items-center justify-center text-3xl mb-3">🌸</div>
-        <h4 class="text-base font-bold text-white">Sesi Chat Baru</h4>
-        <p class="text-xs text-slate-400 mt-1 max-w-sm">Ketik pertanyaan atau beri perintah kepada RattaBot untuk memulai.</p>
-      </div>
-    `;
-    return;
-  }
-
-  list.innerHTML = rattabotChatHistory.map((msg, idx) => {
-    const isUser = msg.role === 'user';
-
-    if (isUser) {
-      return `
-        <div class="flex items-start justify-end gap-3 max-w-2xl ml-auto">
-          <div class="space-y-1 text-right">
-            <div class="flex items-center justify-end gap-2 text-[10px] text-slate-400">
-              <span class="font-medium">${escapeHtml(currentUser?.email || 'User')}</span>
-              <span>•</span>
-              <span>${msg.timestamp || ''}</span>
-            </div>
-            <div class="p-3.5 rounded-2xl rounded-tr-none bg-gradient-to-r from-brand-600 to-indigo-600 text-white text-xs leading-relaxed shadow-md shadow-brand-900/30 text-left">
-              ${escapeHtml(msg.text).replace(/\n/g, '<br>')}
-            </div>
-          </div>
-          <div class="w-8 h-8 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-xs text-slate-300 font-bold shrink-0 mt-4 shadow-sm">
-            <i class="fa-solid fa-user text-[11px] text-brand-300"></i>
-          </div>
-        </div>
-      `;
-    } else {
-      return `
-        <div class="flex items-start gap-3 max-w-2xl mr-auto">
-          <!-- Smiling Pink Flower Avatar -->
-          <div class="relative w-9 h-9 rounded-xl bg-gradient-to-tr from-pink-500 via-rose-500 to-amber-300 p-0.5 shadow-md shadow-pink-500/20 shrink-0 mt-4">
-            <div class="w-full h-full rounded-[10px] bg-slate-900 flex items-center justify-center overflow-hidden">
-              <svg viewBox="0 0 100 100" class="w-7 h-7">
-                <circle cx="50" cy="24" r="18" fill="#f43f5e"/>
-                <circle cx="75" cy="42" r="18" fill="#ec4899"/>
-                <circle cx="65" cy="72" r="18" fill="#f43f5e"/>
-                <circle cx="35" cy="72" r="18" fill="#ec4899"/>
-                <circle cx="25" cy="42" r="18" fill="#f43f5e"/>
-                <circle cx="50" cy="50" r="22" fill="#fbbf24"/>
-                <circle cx="42" cy="46" r="3" fill="#1e293b"/>
-                <circle cx="58" cy="46" r="3" fill="#1e293b"/>
-                <circle cx="37" cy="53" r="3" fill="#f43f5e" opacity="0.6"/>
-                <circle cx="63" cy="53" r="3" fill="#f43f5e" opacity="0.6"/>
-                <path d="M 44 54 Q 50 60 56 54" stroke="#1e293b" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-              </svg>
-            </div>
-          </div>
-          <div class="space-y-1">
-            <div class="flex items-center gap-2 text-[10px] text-slate-400">
-              <span class="font-bold text-pink-400 flex items-center gap-1">
-                <span>RattaBot</span>
-                <span>🌸</span>
-              </span>
-              <span>•</span>
-              <span>${msg.timestamp || ''}</span>
-            </div>
-            <div class="p-4 rounded-2xl rounded-tl-none bg-slate-900 border border-slate-800 text-slate-200 text-xs leading-relaxed shadow-lg rattabot-formatted-text">
-              ${formatRattaBotMarkdown(msg.text)}
-            </div>
-          </div>
-        </div>
-      `;
-    }
-  }).join('');
-
-  list.scrollTop = list.scrollHeight;
-}
-
-function formatRattaBotMarkdown(rawText) {
-  if (!rawText) return '';
-
-  let html = rawText;
-
-  // Escape HTML characters safely
-  html = html
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-
-  // Bold **text**
-  html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-white">$1</strong>');
-
-  // Inline code `code`
-  html = html.replace(/`([^`]+)`/g, '<code class="px-1.5 py-0.5 rounded bg-slate-950 font-mono text-[11px] text-pink-300 border border-slate-800">$1</code>');
-
-  // Bullet items
-  html = html.replace(/^\s*[-*]\s+(.*)$/gm, '<li class="ml-4 list-disc text-slate-300">$1</li>');
-
-  // Numbered list items
-  html = html.replace(/^\s*(\d+)\.\s+(.*)$/gm, '<li class="ml-4 list-decimal text-slate-300"><span class="font-semibold text-slate-200">$2</span></li>');
-
-  // Convert newlines
-  html = html.replace(/\n\n/g, '<div class="my-2"></div>');
-  html = html.replace(/\n/g, '<br>');
-
-  return html;
-}
-
-function applyRattaBotSuggestion(text) {
-  const input = document.getElementById('rattabot-input-text');
-  if (input) {
-    input.value = text;
-    input.focus();
-  }
-}
-
-function clearRattaBotInput() {
-  const input = document.getElementById('rattabot-input-text');
-  const clearBtn = document.getElementById('rattabot-clear-input-btn');
-  if (input) input.value = '';
-  if (clearBtn) clearBtn.classList.add('hidden');
-}
-
-// -----------------------------------------------------------------------------
-// RATTABOT AI SYSTEM CONTEXT & INTERACTION ENGINE
-// -----------------------------------------------------------------------------
-function buildRattaBotSystemContext() {
-  const userEmail = currentUser ? currentUser.email : 'admin@rattan-inn.com';
-  const userName = getGreetingPrefix(userEmail) || 'Admin';
-
-  const itemsSummary = (state.masterItems || []).map(item => {
-    const metrics = calculateStockMetrics(item.id);
-    return {
-      id: item.id,
-      name: item.name,
-      category: item.category,
-      availableStock: metrics.availableStock,
-      totalHeldByDepts: metrics.totalHeldByDepts,
-      minimumStock: item.minimum_stock || 0
-    };
-  });
-
-  const pcsSummary = (state.pcs || []).map(pc => ({
-    id: pc.id,
-    name: pc.name,
-    department: pc.department || null,
-    status: pc.department ? `Terpasang di ${pc.department}` : 'Tersimpan di IT Storage',
-    chipset: pc.chipset,
-    components: pc.components || {}
-  }));
-
-  const posSummary = (state.purchaseOrders || []).slice(0, 8).map(po => ({
-    id: po.id,
-    poNumber: po.po_number,
-    itemName: po.item_name,
-    quantity: po.quantity,
-    vendor: po.vendor,
-    status: po.status
-  }));
-
-  const damagedSummary = (state.preloved || []).slice(0, 8).map(d => ({
-    id: d.id,
-    itemName: d.item_name,
-    department: d.department,
-    condition: d.condition,
-    remarks: d.remarks
-  }));
-
-  return `Kamu adalah "RattaBot", asisten AI pintar dan cerdas dari Rattan-Inn Hotel IT Inventory (berlogo profil bunga pink tersenyum 🌸😊).
-User yang sedang aktif saat ini adalah: "${userEmail}" (panggilan: "${userName}").
-
-KEMAMPUAN UTAMA:
-Kamu memahami SELURUH fitur, formula, alur kerja, dan database aplikasi ini tanpa terkecuali, dan memiliki kemampuan untuk menjelaskan (Q&A) maupun MENGEKSEKUSI PERINTAH (CRUD, mutasi stok, transfer, PO, damaged hardware, dan rakit/kelola PC) atas nama user.
-
-9 DEPARTEMEN HOTEL RESMI:
-1. Front Office
-2. House Keeping
-3. Engineering
-4. Human Resource
-5. F&B Product
-6. F&B Service
-7. Wellness
-8. Sales & Marketing
-9. Accounting
-
-4 KATEGORI HARDWARE RESMI:
-1. PC ITEMS
-2. NETWORK ITEMS
-3. CCTV & TV ITEMS
-4. LOCK SYSTEM
-
-FORMULA INVARIANT STOK:
-Stok Tersedia di IT Storage = (Stok Awal + Total Inbound) - Total Pengurangan - Total Ditransfer ke Dept + Total Dikembalikan dari Dept - Komponen Terpakai di PC Rakitan + Komponen Dikembalikan dari PC.
-Stok di Departemen = Total Diterima Dept - Total Dikembalikan Dept.
-
-SNAPSHOT DATA REAL-TIME SISTEM SAAT INI:
-- Master Items & Stok: ${JSON.stringify(itemsSummary)}
-- Workstation PCs: ${JSON.stringify(pcsSummary)}
-- Recent Purchase Orders: ${JSON.stringify(posSummary)}
-- Recent Damaged Hardware: ${JSON.stringify(damagedSummary)}
-
-ATURAN INTERAKSI (WAJIB DIIKUTI):
-1. JIKA USER BERTANYA (Q&A / Penjelasan):
-   Jawab dengan ramah, cerdas, akurat, dan terstruktur dalam Bahasa Indonesia. Jelaskan cara kerja fitur, formula stok, rincian hardware, atau status PC.
-
-2. JIKA USER MEMBERI PERINTAH TAPI DETAILNYA BELUM LENGKAP:
-   Tanyakan dulu detail yang belum disebutkan secara ramah dan tawarkan pilihan yang valid dari snapshot data sistem saat ini!
-   Contoh: jika user bilang "Pindahkan switch ke Front Office" tanpa kuantitas, tanya: "Stok Switch Hub saat ini ada 5 unit. Berapa unit yang ingin dipindahkan ke Front Office?"
-   Jika user bilang "Rakit PC baru", tanyakan nama PC dan tawarkan komponen yang tersedia dari kategori PC ITEMS.
-
-3. JIKA PERINTAH SUDAH LENGKAP & DETAIL:
-   Kamu LANGSUNG menyiapkan rencana eksekusi dan menyertakan satu blok kode JSON khusus berformat:
-\`\`\`rattabot_action
-{
-  "action": "NAMA_AKSI",
-  "description": "Deskripsi rinci apa yang akan dilakukan dalam Bahasa Indonesia (contoh: 'Transfer 2 unit Switch Hub 8-Port ke departemen Front Office')",
-  "params": { ... }
-}
-\`\`\`
-   Di dalam teks obrolan, sapa user dan jelaskan dengan detail apa yang akan dilakukan, dan tanyakan:
-   "RattaBot akan melakukan [detail aksi]. Apakah anda setuju?"
-
-DAFTAR ACTION TYPE & PARAMS:
-- "create_master_item": params: { "name": string, "category": "PC ITEMS"|"NETWORK ITEMS"|"CCTV & TV ITEMS"|"LOCK SYSTEM", "availableStock": number, "minimumStock": number, "notes": string }
-- "inbound_stock": params: { "itemId": string, "quantity": number, "notes": string }
-- "reduce_stock": params: { "itemId": string, "quantity": number, "reason": string }
-- "transfer_to_department": params: { "itemId": string, "department": string, "quantity": number, "notes": string }
-- "return_to_inventory": params: { "itemId": string, "department": string, "quantity": number, "notes": string }
-- "create_purchase_order": params: { "itemId": string, "quantity": number, "vendor": string, "poNumber": string (opsional), "estimatedArrival": string }
-- "mark_po_arrived": params: { "poId": string }
-- "record_damaged_hardware": params: { "itemName": string, "department": string, "condition": string, "remarks": string }
-- "build_pc": params: { "pcName": string, "chipset": string, "psuId": string, "storageId": string, "ram1Id": string, "ram2Id": string|null, "ram3Id": string|null, "vgaId": string|null }
-- "assign_pc_to_department": params: { "pcId": string, "department": string }
-- "remove_pc_from_department": params: { "pcId": string }
-- "swap_pc_component": params: { "sourcePcId": string, "targetPcId": string, "slotName": string }
-- "return_pc_component": params: { "pcId": string, "slotName": string }
-- "delete_pc": params: { "pcId": string }
-
-Gunakan nada yang ceria, ramah, dan profesional 🌸😊.`;
-}
-
-async function handleRattaBotSubmit(e) {
-  if (e) e.preventDefault();
-  if (isRattaBotBusy) return;
-
-  const input = document.getElementById('rattabot-input-text');
-  const userText = (input?.value || '').trim();
-  if (!userText) return;
-
-  const apiKey = getGeminiApiKey();
-  if (!apiKey && !hasServerGeminiKey) {
-    showToast('Silakan isi Gemini API Key di menu Setting terlebih dahulu.', 'error');
-    navigateTo('settings');
-    return;
-  }
-
-  // Clear input
-  if (input) input.value = '';
-
-  // Append user message to in-memory history
-  rattabotChatHistory.push({
-    role: 'user',
-    text: userText,
-    timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-  });
-
-  resetRattaBotInactivityTimer();
-  renderRattaBotMessages();
-
-  // Call Gemini API via Server-Side Proxy
-  await callRattaBotAI();
-}
-
-async function callRattaBotAI() {
-  const apiKey = getGeminiApiKey();
-  const model = getGeminiModel();
-  const sendBtn = document.getElementById('rattabot-send-btn');
-
-  isRattaBotBusy = true;
-  if (sendBtn) sendBtn.disabled = true;
-  showRattaBotProcessingBanner();
-
-  try {
-    const systemPrompt = buildRattaBotSystemContext();
-
-    // Map in-memory history to Gemini contents (max 10 recent turns to avoid token limit)
-    const recentHistory = rattabotChatHistory.slice(-10);
-    const contents = [];
-
-    // Group turns ensuring alternating user/model
-    recentHistory.forEach(item => {
-      contents.push({
-        role: item.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: item.text }]
-      });
-    });
-
-    const response = await fetch('/api/gemini/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(apiKey ? { 'x-gemini-api-key': apiKey } : {})
-      },
-      body: JSON.stringify({
-        apiKey: apiKey || undefined,
-        model: model,
-        systemInstruction: systemPrompt,
-        contents: contents,
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 1200
-        }
-      })
-    });
-
-    const data = await response.json();
-    if (!response.ok || data.error) {
-      const errMsg = data.error?.message || (typeof data.error === 'string' ? data.error : `HTTP ${response.status}`);
-      throw new Error(errMsg);
-    }
-
-    const rawReply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Maaf, saya tidak dapat memproses jawaban saat ini.';
-
-    // Check if reply includes an action block
-    const actionMatch = rawReply.match(/```rattabot_action\s*([\s\S]*?)\s*```/);
-
-    if (actionMatch) {
-      try {
-        const actionObj = JSON.parse(actionMatch[1]);
-        // Clean display text by removing the raw action block
-        const cleanDisplayText = rawReply.replace(/```rattabot_action\s*[\s\S]*?\s*```/, '').trim();
-
-        rattabotChatHistory.push({
-          role: 'assistant',
-          text: cleanDisplayText || `RattaBot siap mengeksekusi: ${actionObj.description}`,
-          timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-        });
-
-        // Setup two-step confirmation
-        rattabotPendingAction = actionObj;
-        showRattaBotConfirmationCard(actionObj);
-      } catch (parseErr) {
-        console.warn('Failed to parse rattabot_action JSON:', parseErr);
-        rattabotChatHistory.push({
-          role: 'assistant',
-          text: rawReply,
-          timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-        });
-      }
-    } else {
-      rattabotChatHistory.push({
-        role: 'assistant',
-        text: rawReply,
-        timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-      });
-    }
-
-    resetRattaBotInactivityTimer();
-    renderRattaBotMessages();
-  } catch (err) {
-    console.error('RattaBot Error:', err);
-    rattabotChatHistory.push({
-      role: 'assistant',
-      text: `Maaf, terjadi kesalahan saat menghubungi AI engine: ${err.message}. Silakan periksa koneksi atau API Key Anda di menu Pengaturan.`,
-      timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    });
-    renderRattaBotMessages();
-  } finally {
-    isRattaBotBusy = false;
-    if (sendBtn) sendBtn.disabled = false;
-    hideRattaBotProcessingBanner();
-  }
-}
-
-function showRattaBotConfirmationCard(action) {
-  const card = document.getElementById('rattabot-confirmation-card');
-  const textEl = document.getElementById('rattabot-confirm-text');
-  const detailsEl = document.getElementById('rattabot-confirm-details');
-
-  if (!card) return;
-
-  if (textEl) {
-    textEl.textContent = `RattaBot akan melakukan: "${action.description}". Apakah anda setuju?`;
-  }
-
-  if (detailsEl) {
-    detailsEl.textContent = JSON.stringify(action.params, null, 2);
-  }
-
-  card.classList.remove('hidden');
-  const list = document.getElementById('rattabot-messages-list');
-  if (list) list.scrollTop = list.scrollHeight;
-}
-
-function hideRattaBotConfirmationCard() {
-  const card = document.getElementById('rattabot-confirmation-card');
-  if (card) card.classList.add('hidden');
-}
-
-function showRattaBotProcessingBanner() {
-  const banner = document.getElementById('rattabot-processing-banner');
-  if (banner) banner.classList.remove('hidden');
-}
-
-function hideRattaBotProcessingBanner() {
-  const banner = document.getElementById('rattabot-processing-banner');
-  if (banner) banner.classList.add('hidden');
-}
-
-function cancelRattaBotPendingAction() {
-  if (!rattabotPendingAction) return;
-
-  hideRattaBotConfirmationCard();
-  const desc = rattabotPendingAction.description || 'aksi';
-  rattabotPendingAction = null;
-
-  rattabotChatHistory.push({
-    role: 'assistant',
-    text: `Tindakan untuk "${desc}" telah dibatalkan. Ada hal lain yang ingin Anda tanyakan atau instruksikan? 🌸`,
-    timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-  });
-
-  resetRattaBotInactivityTimer();
-  renderRattaBotMessages();
-  showToast('Tindakan dibatalkan.', 'info');
-}
-
-async function executeRattaBotPendingAction() {
-  if (!rattabotPendingAction) return;
-
-  const action = rattabotPendingAction;
-  hideRattaBotConfirmationCard();
-  showRattaBotProcessingBanner();
-
-  try {
-    await performRattaBotExecution(action);
-
-    // Completion Message
-    const completionMsg = `Sudah Selesai ! Saya baru saja melakukan ${action.description}. Boleh anda cek, Senang membantu! 🌸`;
-
-    rattabotChatHistory.push({
-      role: 'assistant',
-      text: completionMsg,
-      timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    });
-
-    rattabotPendingAction = null;
-    showToast(`Sukses: ${action.description}`, 'success');
-  } catch (err) {
-    console.error('Execution Error:', err);
-    rattabotChatHistory.push({
-      role: 'assistant',
-      text: `Maaf, eksekusi gagal: ${err.message}. Data sistem tidak berubah. 🌸`,
-      timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-    });
-    showToast(`Gagal: ${err.message}`, 'error');
-  } finally {
-    hideRattaBotProcessingBanner();
-    resetRattaBotInactivityTimer();
-    renderRattaBotMessages();
-  }
-}
-
-// -----------------------------------------------------------------------------
-// RATTABOT PROGRAMMATIC CRUD EXECUTOR (ATTRIBUTED TO CURRENT USER)
-// -----------------------------------------------------------------------------
-async function performRattaBotExecution(actionObj) {
-  const { action, description, params } = actionObj;
-  const userEmail = currentUser ? currentUser.email : 'admin@hotel.com';
-  const todayDate = new Date().toISOString().split('T')[0];
-
-  state.masterItems = state.masterItems || [];
-  state.stockTransactions = state.stockTransactions || [];
-  state.departmentMovements = state.departmentMovements || [];
-  state.purchaseOrders = state.purchaseOrders || [];
-  state.preloved = state.preloved || [];
-  state.pcs = state.pcs || [];
-  state.pcMovements = state.pcMovements || [];
-  state.pcComponentMovements = state.pcComponentMovements || [];
-
-  switch (action) {
-    case 'create_master_item': {
-      const newItem = {
-        id: `item-${Date.now()}`,
-        name: params.name,
-        category: params.category || 'PC ITEMS',
-        available_stock: parseInt(params.availableStock) || 0,
-        minimum_stock: parseInt(params.minimumStock) || 5,
-        image_url: params.imageUrl || null,
-        created_at: new Date().toISOString()
-      };
-      state.masterItems.unshift(newItem);
-      if (isLiveSupabase && supabaseClient) {
-        await supabaseClient.from('master_items').insert(newItem);
-      }
-      logActivity(newItem.name, newItem.category, `Menambahkan Master Item baru "${newItem.name}" via RattaBot AI`, 'INVENTORY');
-      break;
-    }
-
-    case 'inbound_stock': {
-      const item = state.masterItems.find(i => i.id === params.itemId || i.name.toLowerCase() === (params.itemId || '').toLowerCase());
-      if (!item) throw new Error('Item tidak ditemukan di master inventory.');
-      const qty = parseInt(params.quantity) || 1;
-      const newTx = {
-        id: `tx-${Date.now()}`,
-        item_id: item.id,
-        transaction_date: todayDate,
-        quantity: qty,
-        type: 'INBOUND',
-        remark: params.notes || 'Inbound stock via RattaBot AI',
-        created_by: userEmail,
-        created_at: new Date().toISOString()
-      };
-      state.stockTransactions.unshift(newTx);
-      if (isLiveSupabase && supabaseClient) {
-        await supabaseClient.from('stock_transactions').insert(newTx);
-      }
-      logActivity(item.name, item.category, `Menambah stok masuk +${qty} unit via RattaBot AI`, 'INVENTORY');
-      break;
-    }
-
-    case 'reduce_stock': {
-      const item = state.masterItems.find(i => i.id === params.itemId || i.name.toLowerCase() === (params.itemId || '').toLowerCase());
-      if (!item) throw new Error('Item tidak ditemukan di master inventory.');
-      const metrics = calculateStockMetrics(item.id);
-      const qty = parseInt(params.quantity) || 1;
-      if (metrics.availableStock < qty) {
-        throw new Error(`Stok tidak mencukupi! Tersedia hanya ${metrics.availableStock} unit.`);
-      }
-      const newTx = {
-        id: `tx-${Date.now()}`,
-        item_id: item.id,
-        transaction_date: todayDate,
-        quantity: qty,
-        type: 'REDUCTION',
-        remark: `[PENGURANGAN STOK] ${params.reason || 'Pengurangan via RattaBot AI'}`,
-        created_by: userEmail,
-        created_at: new Date().toISOString()
-      };
-      state.stockTransactions.unshift(newTx);
-      if (isLiveSupabase && supabaseClient) {
-        await supabaseClient.from('stock_transactions').insert(newTx);
-      }
-      logActivity(item.name, item.category, `Mengurangi stok gudang -${qty} unit (${params.reason || 'Pengurangan'}) via RattaBot AI`, 'INVENTORY');
-      break;
-    }
-
-    case 'transfer_to_department': {
-      const item = state.masterItems.find(i => i.id === params.itemId || i.name.toLowerCase() === (params.itemId || '').toLowerCase());
-      if (!item) throw new Error('Item tidak ditemukan di master inventory.');
-      const metrics = calculateStockMetrics(item.id);
-      const qty = parseInt(params.quantity) || 1;
-      if (metrics.availableStock < qty) {
-        throw new Error(`Stok inventory tidak mencukupi! Tersedia ${metrics.availableStock} unit.`);
-      }
-      const newMov = {
-        id: `mov-${Date.now()}`,
-        item_id: item.id,
-        department: params.department,
-        quantity: qty,
-        type: 'TRANSFER',
-        movement_date: todayDate,
-        notes: params.notes || 'Transfer via RattaBot AI',
-        created_by: userEmail,
-        created_at: new Date().toISOString()
-      };
-      state.departmentMovements.unshift(newMov);
-      if (isLiveSupabase && supabaseClient) {
-        await supabaseClient.from('department_movements').insert(newMov);
-      }
-      logActivity(item.name, item.category, `Transfer ${qty} unit ke ${params.department} via RattaBot AI`, 'DEPARTMENT');
-      break;
-    }
-
-    case 'return_to_inventory': {
-      const item = state.masterItems.find(i => i.id === params.itemId || i.name.toLowerCase() === (params.itemId || '').toLowerCase());
-      if (!item) throw new Error('Item tidak ditemukan di master inventory.');
-      const deptHolding = calculateDeptHolding(item.id, params.department);
-      const qty = parseInt(params.quantity) || 1;
-      if (deptHolding < qty) {
-        throw new Error(`Departemen ${params.department} hanya memegang ${deptHolding} unit item ini.`);
-      }
-      const newMov = {
-        id: `mov-${Date.now()}`,
-        item_id: item.id,
-        department: params.department,
-        quantity: qty,
-        type: 'RETURN',
-        movement_date: todayDate,
-        notes: params.notes || 'Pengembalian via RattaBot AI',
-        created_by: userEmail,
-        created_at: new Date().toISOString()
-      };
-      state.departmentMovements.unshift(newMov);
-      if (isLiveSupabase && supabaseClient) {
-        await supabaseClient.from('department_movements').insert(newMov);
-      }
-      logActivity(item.name, item.category, `Pengembalian ${qty} unit dari ${params.department} ke IT Storage via RattaBot AI`, 'DEPARTMENT');
-      break;
-    }
-
-    case 'create_purchase_order': {
-      const item = state.masterItems.find(i => i.id === params.itemId || i.name.toLowerCase() === (params.itemId || '').toLowerCase());
-      const itemName = item ? item.name : (params.itemName || 'Hardware PO');
-      const poNum = params.poNumber || `PO-${new Date().getFullYear()}-${String(state.purchaseOrders.length + 1).padStart(3, '0')}`;
-      const newPO = {
-        id: `po-${Date.now()}`,
-        item_id: item ? item.id : null,
-        item_name: itemName,
-        category: item ? item.category : 'PC ITEMS',
-        quantity: parseInt(params.quantity) || 1,
-        vendor: params.vendor || 'Official IT Distributor',
-        po_number: poNum,
-        status: 'BELUM DATANG',
-        order_date: todayDate,
-        estimated_arrival: params.estimatedArrival || todayDate,
-        created_by: userEmail,
-        created_at: new Date().toISOString()
-      };
-      state.purchaseOrders.unshift(newPO);
-      if (isLiveSupabase && supabaseClient) {
-        await supabaseClient.from('purchase_orders').insert(newPO);
-      }
-      logActivity(itemName, newPO.category, `Membuat Purchase Order ${poNum} (${newPO.quantity} unit) via RattaBot AI`, 'PURCHASE_ORDER');
-      break;
-    }
-
-    case 'mark_po_arrived': {
-      const po = state.purchaseOrders.find(p => p.id === params.poId || p.po_number === params.poId);
-      if (!po) throw new Error('Purchase Order tidak ditemukan.');
-      po.status = 'SUDAH DATANG';
-      if (isLiveSupabase && supabaseClient) {
-        await supabaseClient.from('purchase_orders').update({ status: 'SUDAH DATANG' }).eq('id', po.id);
-      }
-      let matchedItem = state.masterItems.find(i => (po.item_id && i.id === po.item_id) || i.name.toLowerCase() === po.item_name.toLowerCase());
-      if (matchedItem) {
-        const newTx = {
-          id: `tx-${Date.now()}`,
-          item_id: matchedItem.id,
-          transaction_date: todayDate,
-          quantity: po.quantity,
-          type: 'INBOUND',
-          remark: `[PO ARRIVED: ${po.po_number}] Inbound via RattaBot AI`,
-          created_by: userEmail,
-          created_at: new Date().toISOString()
-        };
-        state.stockTransactions.unshift(newTx);
-        if (isLiveSupabase && supabaseClient) {
-          await supabaseClient.from('stock_transactions').insert(newTx);
-        }
-      }
-      logActivity(po.item_name, po.category, `Menandai PO ${po.po_number} SUDAH DATANG via RattaBot AI`, 'PURCHASE_ORDER');
-      break;
-    }
-
-    case 'record_damaged_hardware': {
-      const newDamaged = {
-        id: `preloved-${Date.now()}`,
-        item_name: params.itemName,
-        department: params.department || 'IT Storage',
-        condition: params.condition || 'Rusak / Butuh Perbaikan',
-        date: todayDate,
-        remarks: params.remarks || 'Dicatat via RattaBot AI',
-        created_by: userEmail,
-        created_at: new Date().toISOString()
-      };
-      state.preloved.unshift(newDamaged);
-      if (isLiveSupabase && supabaseClient) {
-        await supabaseClient.from('preloved').insert(newDamaged);
-      }
-      logActivity(newDamaged.item_name, 'DAMAGED_HARDWARE', `Mencatat Damaged Hardware "${newDamaged.item_name}" via RattaBot AI`, 'DAMAGED_HARDWARE');
-      break;
-    }
-
-    case 'build_pc': {
-      const pcName = params.pcName;
-      if (!pcName) throw new Error('Nama PC wajib diisi.');
-      if (state.pcs.some(p => p.name.toLowerCase() === pcName.toLowerCase())) {
-        throw new Error(`Nama PC "${pcName}" sudah ada.`);
-      }
-
-      const components = {
-        psu: params.psuId || null,
-        storage: params.storageId || null,
-        ram1: params.ram1Id || null,
-        ram2: params.ram2Id || null,
-        ram3: params.ram3Id || null,
-        vga: params.vgaId || null
-      };
-
-      const newPC = {
-        id: `pc-${Date.now()}`,
-        name: pcName,
-        chipset: params.chipset || 'Intel Core i5',
-        department: params.department || null,
-        components: components,
-        created_at: new Date().toISOString()
-      };
-
-      // Record component deduction
-      const slots = [
-        { slot: 'Power Supply', id: components.psu },
-        { slot: 'Hardisk / SSD', id: components.storage },
-        { slot: 'RAM Slot 1', id: components.ram1 },
-        { slot: 'RAM Slot 2', id: components.ram2 },
-        { slot: 'RAM Slot 3', id: components.ram3 },
-        { slot: 'VGA Card', id: components.vga }
-      ].filter(s => s.id);
-
-      slots.forEach(s => {
-        const item = state.masterItems.find(i => i.id === s.id);
-        const itemName = item ? item.name : s.id;
-        state.departmentMovements.unshift({
-          id: `mov-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-          item_id: s.id,
-          department: 'Workstation PC',
-          quantity: 1,
-          type: 'TRANSFER TO PC',
-          movement_date: todayDate,
-          notes: `Rakit PC "${pcName}" [Slot: ${s.slot}] via RattaBot AI`,
-          created_by: userEmail,
-          created_at: new Date().toISOString()
-        });
-
-        state.pcComponentMovements.unshift({
-          id: `pcmov-comp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-          pc_id: newPC.id,
-          pc_name: pcName,
-          slot_name: s.slot,
-          component_id: s.id,
-          component_name: itemName,
-          action_type: 'PASANG BARU',
-          target_pc_id: null,
-          target_pc_name: null,
-          actor: userEmail,
-          remarks: `Pemasangan komponen saat perakitan PC via RattaBot AI`,
-          timestamp: new Date().toISOString()
-        });
-      });
-
-      state.pcMovements.unshift({
-        id: `pcmov-${Date.now()}`,
-        pc_id: newPC.id,
-        pc_name: pcName,
-        from_dept: 'Gudang IT',
-        to_dept: params.department || 'Tersimpan di IT Storage',
-        action_type: 'RAKIT PC BARU',
-        actor: userEmail,
-        remarks: `Perakitan workstation PC baru via RattaBot AI`,
-        timestamp: new Date().toISOString()
-      });
-
-      state.pcs.unshift(newPC);
-
-      if (isLiveSupabase && supabaseClient) {
-        await supabaseClient.from('pcs').insert(newPC);
-      }
-      logActivity(pcName, 'PC ITEMS', `Merakit Workstation PC baru "${pcName}" via RattaBot AI`, 'PC');
-      break;
-    }
-
-    case 'assign_pc_to_department': {
-      const pc = state.pcs.find(p => p.id === params.pcId || p.name.toLowerCase() === (params.pcId || '').toLowerCase());
-      if (!pc) throw new Error('PC tidak ditemukan.');
-      const oldDept = pc.department || 'IT Storage';
-      pc.department = params.department;
-
-      state.pcMovements.unshift({
-        id: `pcmov-${Date.now()}`,
-        pc_id: pc.id,
-        pc_name: pc.name,
-        from_dept: oldDept,
-        to_dept: params.department,
-        action_type: 'PINDAH DEPARTEMEN',
-        actor: userEmail,
-        remarks: `Penempatan PC ke departemen ${params.department} via RattaBot AI`,
-        timestamp: new Date().toISOString()
-      });
-
-      if (isLiveSupabase && supabaseClient) {
-        await supabaseClient.from('pcs').update({ department: params.department }).eq('id', pc.id);
-      }
-      logActivity(pc.name, 'PC ITEMS', `Menempatkan PC "${pc.name}" di ${params.department} via RattaBot AI`, 'PC');
-      break;
-    }
-
-    case 'remove_pc_from_department': {
-      const pc = state.pcs.find(p => p.id === params.pcId || p.name.toLowerCase() === (params.pcId || '').toLowerCase());
-      if (!pc) throw new Error('PC tidak ditemukan.');
-      const oldDept = pc.department || 'Departemen';
-      pc.department = null;
-
-      state.pcMovements.unshift({
-        id: `pcmov-${Date.now()}`,
-        pc_id: pc.id,
-        pc_name: pc.name,
-        from_dept: oldDept,
-        to_dept: 'Tersimpan di IT Storage',
-        action_type: 'LEPAS DEPARTEMEN',
-        actor: userEmail,
-        remarks: `Pelepasan PC dari ${oldDept} kembali ke IT Storage via RattaBot AI`,
-        timestamp: new Date().toISOString()
-      });
-
-      if (isLiveSupabase && supabaseClient) {
-        await supabaseClient.from('pcs').update({ department: null }).eq('id', pc.id);
-      }
-      logActivity(pc.name, 'PC ITEMS', `Melepas PC "${pc.name}" dari ${oldDept} via RattaBot AI`, 'PC');
-      break;
-    }
-
-    case 'delete_pc': {
-      const pc = state.pcs.find(p => p.id === params.pcId || p.name.toLowerCase() === (params.pcId || '').toLowerCase());
-      if (!pc) throw new Error('PC tidak ditemukan.');
-
-      // Return all components to inventory (+1 stock)
-      const compKeys = ['psu', 'storage', 'ram1', 'ram2', 'ram3', 'vga'];
-      compKeys.forEach(slotKey => {
-        const compId = pc.components?.[slotKey];
-        if (compId) {
-          const item = state.masterItems.find(i => i.id === compId);
-          const itemName = item ? item.name : compId;
-
-          state.departmentMovements.unshift({
-            id: `mov-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-            item_id: compId,
-            department: 'IT Storage',
-            quantity: 1,
-            type: 'RETURN FROM PC',
-            movement_date: todayDate,
-            notes: `Auto-return dari hapus PC "${pc.name}" via RattaBot AI`,
-            created_by: userEmail,
-            created_at: new Date().toISOString()
-          });
-
-          state.pcComponentMovements.unshift({
-            id: `pcmov-comp-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
-            pc_id: pc.id,
-            pc_name: pc.name,
-            slot_name: slotKey.toUpperCase(),
-            component_id: compId,
-            component_name: itemName,
-            action_type: 'KEMBALI KE INVENTORY',
-            target_pc_id: null,
-            target_pc_name: null,
-            actor: userEmail,
-            remarks: `Komponen dikembalikan ke gudang inventory karena PC dihapus via RattaBot AI`,
-            timestamp: new Date().toISOString()
-          });
-        }
-      });
-
-      state.pcMovements.unshift({
-        id: `pcmov-${Date.now()}`,
-        pc_id: pc.id,
-        pc_name: pc.name,
-        from_dept: pc.department || 'IT Storage',
-        to_dept: 'DIHAPUS',
-        action_type: 'HAPUS PC',
-        actor: userEmail,
-        remarks: `PC dihapus via RattaBot AI (seluruh komponen kembali ke gudang inventory)`,
-        timestamp: new Date().toISOString()
-      });
-
-      state.pcs = state.pcs.filter(p => p.id !== pc.id);
-
-      if (isLiveSupabase && supabaseClient) {
-        await supabaseClient.from('pcs').delete().eq('id', pc.id);
-      }
-      logActivity(pc.name, 'PC ITEMS', `Menghapus Workstation PC "${pc.name}" & mengembalikan komponen via RattaBot AI`, 'PC');
-      break;
-    }
-
-    default:
-      throw new Error(`Aksi "${action}" tidak dikenali oleh sistem.`);
-  }
-
-  // Persist updated state locally & refresh all UI tables live
-  persistState();
-  refreshAllViews();
-}
-
-// Global Window Exports for RattaBot & Gemini Settings
-window.getGeminiApiKey = getGeminiApiKey;
-window.getGeminiModel = getGeminiModel;
-window.initGeminiSettings = initGeminiSettings;
-window.saveGeminiSettings = saveGeminiSettings;
-window.clearGeminiSettings = clearGeminiSettings;
-window.toggleGeminiKeyVisibility = toggleGeminiKeyVisibility;
-window.testGeminiConnection = testGeminiConnection;
-
-window.onEnterRattaBotView = onEnterRattaBotView;
-window.onExitRattaBotView = onExitRattaBotView;
-window.startRattaBotInactivityTimer = startRattaBotInactivityTimer;
-window.stopRattaBotInactivityTimer = stopRattaBotInactivityTimer;
-window.resetRattaBotInactivityTimer = resetRattaBotInactivityTimer;
-window.clearRattaBotSession = clearRattaBotSession;
-window.resetRattaBotChat = resetRattaBotChat;
-window.renderRattaBotMessages = renderRattaBotMessages;
-window.applyRattaBotSuggestion = applyRattaBotSuggestion;
-window.clearRattaBotInput = clearRattaBotInput;
-window.handleRattaBotSubmit = handleRattaBotSubmit;
-window.cancelRattaBotPendingAction = cancelRattaBotPendingAction;
-window.executeRattaBotPendingAction = executeRattaBotPendingAction;
-window.executeRattaBotAction = performRattaBotExecution;
-
 document.addEventListener('DOMContentLoaded', () => {
   startRealTimeDeviceClock();
   initSupabaseClient();
   initSettingsForm();
   initMonthlyView();
-  checkServerGeminiStatus();
 
   document.getElementById('form-login')?.addEventListener('submit', handleLoginSubmit);
   document.getElementById('btn-logout')?.addEventListener('click', handleLogout);
