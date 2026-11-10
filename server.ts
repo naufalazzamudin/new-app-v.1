@@ -1,6 +1,6 @@
 /**
- * Hotel IT Inventory Management - Pure Static SPA Server & Gemini API Proxy
- * Ultra-lightweight zero-dependency Node.js server
+ * Hotel IT Inventory Management - Pure Static SPA Server
+ * Super-lightweight zero-dependency static server using native Node.js http
  */
 import http from 'http';
 import fs from 'fs';
@@ -26,73 +26,11 @@ const MIME_TYPES: Record<string, string> = {
   '.ico': 'image/x-icon'
 };
 
-const server = http.createServer(async (req, res) => {
-  // CORS Headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-gemini-api-key');
+const server = http.createServer((req, res) => {
+  let reqPath = req.url?.split('?')[0] || '/';
+  if (reqPath === '/') reqPath = '/index.html';
 
-  if (req.method === 'OPTIONS') {
-    res.writeHead(204);
-    res.end();
-    return;
-  }
-
-  const parsedUrl = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
-  const reqPath = parsedUrl.pathname;
-
-  // Server-side Gemini API endpoint
-  if (reqPath === '/api/gemini/chat' && req.method === 'POST') {
-    let body = '';
-    req.on('data', chunk => { body += chunk; });
-    req.on('end', async () => {
-      try {
-        const payload = JSON.parse(body || '{}');
-        const apiKey = payload.apiKey || (req.headers['x-gemini-api-key'] as string) || process.env.GEMINI_API_KEY;
-
-        if (!apiKey) {
-          res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'GEMINI_API_KEY is not configured' }));
-          return;
-        }
-
-        const model = payload.model || 'gemini-3.8-flash';
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-
-        const geminiRes = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'User-Agent': 'aistudio-build'
-          },
-          body: JSON.stringify({
-            contents: payload.contents || [],
-            systemInstruction: payload.systemInstruction ? { parts: [{ text: payload.systemInstruction }] } : undefined,
-            generationConfig: payload.generationConfig
-          })
-        });
-
-        const data = await geminiRes.json();
-        res.writeHead(geminiRes.status, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(data));
-      } catch (err: any) {
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ error: err?.message || 'Internal error' }));
-      }
-    });
-    return;
-  }
-
-  // Health check endpoint for Cloud Run and container health monitors
-  if (reqPath === '/healthz' || reqPath === '/api/health') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ status: 'ok', uptime: process.uptime() }));
-    return;
-  }
-
-  // Static file serving
-  let targetPath = reqPath === '/' ? '/index.html' : reqPath;
-  let filePath = path.join(ROOT, targetPath);
+  let filePath = path.join(ROOT, reqPath);
 
   // Prevent directory traversal
   if (!filePath.startsWith(ROOT)) {
@@ -101,7 +39,7 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // SPA fallback
+  // SPA fallback to index.html if file doesn't exist or is a directory
   if (!fs.existsSync(filePath) || fs.statSync(filePath).isDirectory()) {
     filePath = path.join(ROOT, 'index.html');
   }
@@ -115,11 +53,14 @@ const server = http.createServer(async (req, res) => {
       res.end('Internal Server Error');
       return;
     }
-    res.writeHead(200, { 'Content-Type': contentType });
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Access-Control-Allow-Origin': '*'
+    });
     res.end(content);
   });
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running at http://0.0.0.0:${PORT}`);
+  console.log(`Pure Static SPA Server running at http://0.0.0.0:${PORT}`);
 });
