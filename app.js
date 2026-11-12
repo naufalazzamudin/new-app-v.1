@@ -2752,7 +2752,7 @@ function exportInventoryExcel() {
   if (!XLSX) return;
 
   const data = [
-    ['RATTAN-INN HOTEL IT INVENTORY MANAGEMENT - MASTER CATALOG & STOCK REPORT'],
+    ['RATTAN-INN HOTEL IT ASSETS CONTROL - MASTER CATALOG & STOCK REPORT'],
     [`Generated: ${new Date().toLocaleString()} | User: ${currentUser ? currentUser.email : 'System'}`],
     [],
     ['No', 'Item Code', 'Item Name', 'Category', 'Total Inbound', 'Total Reduced', 'Total Transferred', 'Total Returned', 'Available Stock in IT', 'Status', 'Remark']
@@ -2796,7 +2796,7 @@ function exportDepartmentalExcel() {
   if (!XLSX) return;
 
   const data = [
-    ['RATTAN-INN HOTEL IT INVENTORY - 9 DEPARTMENTS ASSET HOLDINGS REPORT'],
+    ['RATTAN-INN HOTEL IT ASSETS CONTROL - 9 DEPARTMENTS ASSET HOLDINGS REPORT'],
     [`Generated: ${new Date().toLocaleString()}`],
     [],
     ['No', 'Department', 'Item Name', 'Category', 'Held Units', 'Total Received', 'Total Returned', 'Last Recipient / PIC', 'Last Movement Date']
@@ -2846,7 +2846,7 @@ function exportMotionExcel() {
   if (!XLSX) return;
 
   const data = [
-    ['RATTAN-INN HOTEL IT INVENTORY - MOTION AUDIT TRAIL LOG'],
+    ['RATTAN-INN HOTEL IT ASSETS CONTROL - MOTION AUDIT TRAIL LOG'],
     [`Generated: ${new Date().toLocaleString()}`],
     [],
     ['No', 'Date', 'Hardware Item', 'Category', 'Movement Type', 'Department', 'Quantity', 'Recipient / PIC', 'Remark', 'Recorded By']
@@ -2928,7 +2928,7 @@ function exportPrelovedExcel() {
   if (!XLSX) return;
 
   const data = [
-    ['RATTAN-INN HOTEL IT INVENTORY - DAMAGED HARDWARE & REFURBISHED ITEMS'],
+    ['RATTAN-INN HOTEL IT ASSETS CONTROL - DAMAGED HARDWARE & REFURBISHED ITEMS'],
     [`Generated: ${new Date().toLocaleString()}`],
     [],
     ['No', 'Item Code', 'Item Name', 'Category', 'Date Repaired', 'Qty', 'Serial Number', 'Remark / Ex-Location']
