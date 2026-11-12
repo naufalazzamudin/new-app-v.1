@@ -782,7 +782,10 @@ function renderDashboard() {
   if (statPC) statPC.textContent = totalPCs;
   if (statPCSub) statPCSub.textContent = `${inDeptPCs} Dept · ${readyPCs} Storage`;
 
-  // 7 Departments Quick Glance Grid
+  // Render Large PC Management Root Topology Card
+  renderDashboardPCRootTopology();
+
+  // 9 Departments Quick Glance Grid
   const deptsGrid = document.getElementById('dashboard-depts-grid');
   if (deptsGrid) {
     deptsGrid.innerHTML = DEPARTMENTS.map(dept => {
@@ -790,17 +793,25 @@ function renderDashboard() {
       return `
         <div
           onclick="selectDepartmentAndNavigate('${dept}')"
-          class="p-4 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-brand-500/50 cursor-pointer transition group"
+          class="stat-card-modern border-amber p-4 cursor-pointer transition group"
         >
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-300 group-hover:text-white transition">${dept}</span>
-            <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-slate-600 group-hover:text-brand-400 transition"></i>
+          <div class="soft-light-orb -right-6 -top-6 w-20 h-20 bg-amber-500/10 group-hover:bg-amber-500/25"></div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-200 group-hover:text-amber-300 transition truncate">${dept}</span>
+              <div class="w-6 h-6 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center group-hover:bg-amber-500/20 group-hover:scale-110 transition">
+                <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+              </div>
+            </div>
+            <div class="mt-2.5 flex items-baseline gap-2">
+              <span class="text-2xl font-black font-mono text-amber-300">${totalUnits}</span>
+              <span class="text-[10px] text-slate-400 font-medium">units held</span>
+            </div>
+            <div class="text-[11px] text-slate-400 mt-1 flex items-center gap-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-400/80"></span>
+              <span>${totalUniqueItems} distinct items</span>
+            </div>
           </div>
-          <div class="mt-2 flex items-baseline gap-2">
-            <span class="text-xl font-bold font-mono text-amber-400">${totalUnits}</span>
-            <span class="text-[10px] text-slate-500">units held</span>
-          </div>
-          <div class="text-[10px] text-slate-400 mt-1">${totalUniqueItems} distinct items</div>
         </div>
       `;
     }).join('');
@@ -816,40 +827,52 @@ function renderDashboard() {
     const total = state.masterItems.length || 1;
 
     catContainer.innerHTML = `
-      <div>
-        <div class="flex justify-between text-xs mb-1">
-          <span class="text-slate-300 font-medium">PC ITEMS</span>
-          <span class="text-slate-400 font-mono font-bold">${pcCount} (${Math.round((pcCount / total) * 100)}%)</span>
+      <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:border-cyan-500/40 transition">
+        <div class="flex justify-between text-xs mb-1.5">
+          <span class="text-slate-300 font-semibold flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+            PC ITEMS
+          </span>
+          <span class="text-cyan-300 font-mono font-bold">${pcCount} (${Math.round((pcCount / total) * 100)}%)</span>
         </div>
-        <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-          <div class="h-full bg-cyan-400 rounded-full" style="width: ${(pcCount / total) * 100}%"></div>
-        </div>
-      </div>
-      <div>
-        <div class="flex justify-between text-xs mb-1">
-          <span class="text-slate-300 font-medium">NETWORK ITEMS</span>
-          <span class="text-slate-400 font-mono font-bold">${netCount} (${Math.round((netCount / total) * 100)}%)</span>
-        </div>
-        <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-          <div class="h-full bg-indigo-500 rounded-full" style="width: ${(netCount / total) * 100}%"></div>
+        <div class="w-full h-2 rounded-full bg-slate-800/90 overflow-hidden p-0.5">
+          <div class="h-full bg-gradient-to-r from-cyan-500 to-cyan-300 rounded-full shadow-sm shadow-cyan-500/50" style="width: ${(pcCount / total) * 100}%"></div>
         </div>
       </div>
-      <div>
-        <div class="flex justify-between text-xs mb-1">
-          <span class="text-slate-300 font-medium">CCTV & TV ITEMS</span>
-          <span class="text-slate-400 font-mono font-bold">${cctvCount} (${Math.round((cctvCount / total) * 100)}%)</span>
+      <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:border-indigo-500/40 transition">
+        <div class="flex justify-between text-xs mb-1.5">
+          <span class="text-slate-300 font-semibold flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+            NETWORK ITEMS
+          </span>
+          <span class="text-indigo-300 font-mono font-bold">${netCount} (${Math.round((netCount / total) * 100)}%)</span>
         </div>
-        <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-          <div class="h-full bg-amber-400 rounded-full" style="width: ${(cctvCount / total) * 100}%"></div>
+        <div class="w-full h-2 rounded-full bg-slate-800/90 overflow-hidden p-0.5">
+          <div class="h-full bg-gradient-to-r from-indigo-500 to-indigo-300 rounded-full shadow-sm shadow-indigo-500/50" style="width: ${(netCount / total) * 100}%"></div>
         </div>
       </div>
-      <div>
-        <div class="flex justify-between text-xs mb-1">
-          <span class="text-slate-300 font-medium">LOCK SYSTEM</span>
-          <span class="text-slate-400 font-mono font-bold">${lockCount} (${Math.round((lockCount / total) * 100)}%)</span>
+      <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:border-amber-500/40 transition">
+        <div class="flex justify-between text-xs mb-1.5">
+          <span class="text-slate-300 font-semibold flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+            CCTV & TV ITEMS
+          </span>
+          <span class="text-amber-300 font-mono font-bold">${cctvCount} (${Math.round((cctvCount / total) * 100)}%)</span>
         </div>
-        <div class="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-          <div class="h-full bg-emerald-400 rounded-full" style="width: ${(lockCount / total) * 100}%"></div>
+        <div class="w-full h-2 rounded-full bg-slate-800/90 overflow-hidden p-0.5">
+          <div class="h-full bg-gradient-to-r from-amber-500 to-amber-300 rounded-full shadow-sm shadow-amber-500/50" style="width: ${(cctvCount / total) * 100}%"></div>
+        </div>
+      </div>
+      <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800/80 hover:border-emerald-500/40 transition">
+        <div class="flex justify-between text-xs mb-1.5">
+          <span class="text-slate-300 font-semibold flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            LOCK SYSTEM
+          </span>
+          <span class="text-emerald-300 font-mono font-bold">${lockCount} (${Math.round((lockCount / total) * 100)}%)</span>
+        </div>
+        <div class="w-full h-2 rounded-full bg-slate-800/90 overflow-hidden p-0.5">
+          <div class="h-full bg-gradient-to-r from-emerald-500 to-emerald-300 rounded-full shadow-sm shadow-emerald-500/50" style="width: ${(lockCount / total) * 100}%"></div>
         </div>
       </div>
     `;
@@ -865,30 +888,297 @@ function renderDashboard() {
       actList.innerHTML = recent.map(a => {
         let icon = 'fa-boxes-stacked';
         let color = 'text-brand-400';
-        if (a.action === 'Transfer') { icon = 'fa-share-from-square'; color = 'text-amber-400'; }
-        if (a.action === 'Return') { icon = 'fa-arrow-rotate-left'; color = 'text-emerald-400'; }
-        if (a.action === 'Received') { icon = 'fa-file-invoice'; color = 'text-blue-400'; }
-        if (a.action === 'Reduced') { icon = 'fa-circle-minus'; color = 'text-rose-400'; }
+        let bgOrb = 'bg-brand-500/10 border-brand-500/20';
+        let hoverBorder = 'hover:border-brand-500/40';
+        if (a.action === 'Transfer') { icon = 'fa-share-from-square'; color = 'text-amber-400'; bgOrb = 'bg-amber-500/10 border-amber-500/20'; hoverBorder = 'hover:border-amber-500/40'; }
+        if (a.action === 'Return') { icon = 'fa-arrow-rotate-left'; color = 'text-emerald-400'; bgOrb = 'bg-emerald-500/10 border-emerald-500/20'; hoverBorder = 'hover:border-emerald-500/40'; }
+        if (a.action === 'Received') { icon = 'fa-file-invoice'; color = 'text-blue-400'; bgOrb = 'bg-blue-500/10 border-blue-500/20'; hoverBorder = 'hover:border-blue-500/40'; }
+        if (a.action === 'Reduced') { icon = 'fa-circle-minus'; color = 'text-rose-400'; bgOrb = 'bg-rose-500/10 border-rose-500/20'; hoverBorder = 'hover:border-rose-500/40'; }
 
         const dateStr = a.timestamp ? new Date(a.timestamp).toLocaleDateString('en-GB') : '';
 
         return `
-          <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between text-xs">
+          <div class="p-3.5 rounded-xl bg-slate-900/80 border border-slate-800/90 ${hoverBorder} transition flex items-center justify-between text-xs group">
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-lg bg-slate-800 ${color} flex items-center justify-center">
+              <div class="w-9 h-9 rounded-xl ${bgOrb} border ${color} flex items-center justify-center group-hover:scale-110 transition">
                 <i class="fa-solid ${icon}"></i>
               </div>
               <div>
-                <div class="font-semibold text-white">${escapeHtml(a.item_name)}</div>
-                <div class="text-[11px] text-slate-400">${a.action} by ${escapeHtml(a.username || 'System')}</div>
+                <div class="font-bold text-white group-hover:text-indigo-200 transition">${escapeHtml(a.item_name)}</div>
+                <div class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1.5">
+                  <span class="font-medium text-slate-300">${a.action}</span>
+                  <span>·</span>
+                  <span>by ${escapeHtml(a.username || 'System')}</span>
+                </div>
               </div>
             </div>
-            <span class="text-[10px] font-mono text-slate-500">${dateStr}</span>
+            <span class="text-[11px] font-mono text-slate-500 bg-slate-950/60 px-2 py-1 rounded-md border border-slate-800">${dateStr}</span>
           </div>
         `;
       }).join('');
     }
   }
+}
+
+// ==============================================================================
+// 7.1 DASHBOARD PC MANAGEMENT ROOT TOPOLOGY RENDERING
+// ==============================================================================
+function renderDashboardPCRootTopology() {
+  const container = document.getElementById('dashboard-pc-root-container');
+  if (!container) return;
+
+  state.pcs = state.pcs || [];
+  const totalPCs = state.pcs.length;
+  const inDeptPCs = state.pcs.filter(p => !!p.department).length;
+  const readyPCs = totalPCs - inDeptPCs;
+  const deploymentRate = totalPCs > 0 ? Math.round((inDeptPCs / totalPCs) * 100) : 0;
+  const storageRate = totalPCs > 0 ? Math.round((readyPCs / totalPCs) * 100) : 0;
+
+  // Department distribution
+  const deptBreakdown = DEPARTMENTS.map(dept => {
+    const pcsInDept = state.pcs.filter(p => p.department === dept);
+    return {
+      department: dept,
+      count: pcsInDept.length,
+      pcs: pcsInDept
+    };
+  });
+  const activeDepts = deptBreakdown.filter(d => d.count > 0);
+  const activeDeptsCount = activeDepts.length;
+
+  // Ready PCs list
+  const readyPCList = state.pcs.filter(p => !p.department);
+
+  // 1. Quick KPI Cards
+  const statsHtml = `
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+      <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800/90 relative overflow-hidden group-hover:border-indigo-500/30 transition">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+          <span class="font-semibold uppercase tracking-wider text-[11px]">Total PC Dirakit</span>
+          <div class="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+            <i class="fa-solid fa-desktop text-xs"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-black font-mono text-white tracking-tight">${totalPCs} <span class="text-xs text-slate-400 font-sans font-normal">Unit</span></div>
+        <div class="text-[11px] text-indigo-300 mt-1 flex items-center gap-1">
+          <i class="fa-solid fa-microchip text-[10px]"></i>
+          <span>Assembled & Registered</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800/90 relative overflow-hidden group-hover:border-amber-500/30 transition">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+          <span class="font-semibold uppercase tracking-wider text-[11px]">Terpasang Departemen</span>
+          <div class="w-7 h-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center">
+            <i class="fa-solid fa-building-circle-check text-xs"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-black font-mono text-amber-300 tracking-tight">${inDeptPCs} <span class="text-xs text-slate-400 font-sans font-normal">Unit</span></div>
+        <div class="text-[11px] text-amber-400/90 mt-1 flex items-center gap-1 font-mono">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+          <span>${deploymentRate}% Tingkat Penempatan</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800/90 relative overflow-hidden group-hover:border-emerald-500/30 transition">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+          <span class="font-semibold uppercase tracking-wider text-[11px]">Ready in Storage</span>
+          <div class="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+            <i class="fa-solid fa-boxes-stacked text-xs"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-black font-mono text-emerald-300 tracking-tight">${readyPCs} <span class="text-xs text-slate-400 font-sans font-normal">Unit</span></div>
+        <div class="text-[11px] text-emerald-400/90 mt-1 flex items-center gap-1 font-mono">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+          <span>${storageRate}% Standby di IT Room</span>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800/90 relative overflow-hidden group-hover:border-cyan-500/30 transition">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+          <span class="font-semibold uppercase tracking-wider text-[11px]">Cakupan Departemen</span>
+          <div class="w-7 h-7 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
+            <i class="fa-solid fa-network-wired text-xs"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-black font-mono text-cyan-300 tracking-tight">${activeDeptsCount} <span class="text-xs text-slate-400 font-sans font-normal">/ 9 Dept</span></div>
+        <div class="text-[11px] text-cyan-400/90 mt-1 flex items-center gap-1">
+          <i class="fa-solid fa-circle-check text-[10px]"></i>
+          <span>Departemen Operasional</span>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // 2. The Modern Root/Tree Topology Visualization
+  const treeHtml = `
+    <div class="p-5 sm:p-6 rounded-2xl bg-slate-950/60 border border-slate-800/80 relative overflow-hidden">
+      <!-- Section Title & Legend -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-5 border-b border-slate-800/80">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-tree text-indigo-400 text-sm"></i>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Topologi Akar Distribusi Workstation</span>
+        </div>
+        <div class="flex items-center gap-3 text-[11px] text-slate-400">
+          <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-indigo-400"></span>Pangkal Induk</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-emerald-400"></span>Akar Storage</span>
+          <span class="inline-flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400"></span>Akar Departemen</span>
+        </div>
+      </div>
+
+      <!-- LEVEL 1: ROOT TRUNK / PANGKAL AKAR (CENTRAL ASSEMBLY HUB) -->
+      <div class="flex flex-col items-center">
+        <div class="max-w-md w-full p-4 rounded-2xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-indigo-950/80 border-2 border-indigo-500/40 shadow-lg shadow-indigo-500/20 text-center relative group-hover:border-indigo-400 transition">
+          <div class="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-300 mb-2 border border-indigo-500/30">
+            <i class="fa-solid fa-server text-base"></i>
+          </div>
+          <div class="text-[11px] font-bold uppercase tracking-widest text-indigo-300 font-mono">PANGKAL INDUK WORKSTATION</div>
+          <div class="text-xl sm:text-2xl font-black text-white tracking-tight mt-0.5">${totalPCs} Unit PC Dirakit</div>
+          <div class="mt-1 flex items-center justify-center gap-2 text-[11px] text-slate-400">
+            <span>Komponen Terintegrasi</span>
+            <span>•</span>
+            <span class="text-emerald-400 font-semibold font-mono">${readyPCs} Ready</span>
+            <span>•</span>
+            <span class="text-amber-400 font-semibold font-mono">${inDeptPCs} Terpasang</span>
+          </div>
+        </div>
+
+        <!-- Vertical Root Trunk Stem Line -->
+        <div class="w-0.5 h-7 bg-gradient-to-b from-indigo-500 to-indigo-500/40 relative">
+          <span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>
+        </div>
+
+        <!-- Horizontal Root Splitter Bridge (Percabangan Kiri & Kanan) -->
+        <div class="w-full max-w-4xl relative">
+          <div class="w-full h-0.5 bg-gradient-to-r from-emerald-500/40 via-indigo-500/60 to-amber-500/40 rounded-full"></div>
+          <!-- Left and Right node connectors -->
+          <div class="flex justify-between w-full px-8 sm:px-16">
+            <div class="w-0.5 h-6 bg-emerald-500/60"></div>
+            <div class="w-0.5 h-6 bg-amber-500/60"></div>
+          </div>
+        </div>
+
+        <!-- LEVEL 2: DUA CABANG AKAR UTAMA (STORAGE BUFFER VS DEPLOYED) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 w-full max-w-5xl mt-1">
+          <!-- CABANG KIRI: AKAR READY DI IT STORAGE (lg:col-span-4) -->
+          <div class="lg:col-span-4 flex flex-col">
+            <div class="p-4 rounded-2xl bg-slate-900/90 border border-emerald-500/30 hover:border-emerald-500/60 transition shadow-lg shadow-emerald-500/5 h-full flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between pb-2.5 border-b border-slate-800">
+                  <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/20">
+                      <i class="fa-solid fa-boxes-stacked text-xs"></i>
+                    </div>
+                    <div>
+                      <div class="text-xs font-bold text-white">Akar IT Storage</div>
+                      <div class="text-[10px] text-emerald-400/80 font-medium">Ready Buffer</div>
+                    </div>
+                  </div>
+                  <span class="px-2.5 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 font-mono font-bold text-xs text-emerald-300">
+                    ${readyPCs} PC
+                  </span>
+                </div>
+
+                <p class="text-[11px] text-slate-400 mt-2.5 leading-relaxed">
+                  Unit workstation rakitan yang tersimpan di IT Room dan siap dialokasikan ke departemen.
+                </p>
+
+                <!-- List of Ready PCs -->
+                <div class="mt-3.5 space-y-1.5">
+                  <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Daftar PC Siap Pakai:</div>
+                  ${readyPCList.length === 0 ? `
+                    <div class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 text-center text-[11px] text-slate-500 italic">
+                      ${totalPCs === 0 ? 'Belum ada unit PC yang dirakit.' : 'Semua PC terpasang di departemen.'}
+                    </div>
+                  ` : `
+                    <div class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1">
+                      ${readyPCList.map(pc => `
+                        <div class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-200 text-[11px] font-mono">
+                          <i class="fa-solid fa-desktop text-[10px] text-emerald-400"></i>
+                          <span class="font-semibold">${escapeHtml(pc.name)}</span>
+                          <span class="text-[9px] text-emerald-400/60 font-sans">(${escapeHtml(pc.chipset || 'PC')})</span>
+                        </div>
+                      `).join('')}
+                    </div>
+                  `}
+                </div>
+              </div>
+
+              <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-[11px]">
+                <span class="text-slate-400">Porsi Cadangan:</span>
+                <span class="font-mono font-bold text-emerald-300">${storageRate}%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CABANG KANAN: AKAR TERPASANG DI DEPARTEMEN (lg:col-span-8) -->
+          <div class="lg:col-span-8 flex flex-col">
+            <div class="p-4 sm:p-5 rounded-2xl bg-slate-900/90 border border-amber-500/30 hover:border-amber-500/60 transition shadow-lg shadow-amber-500/5 h-full">
+              <div class="flex items-center justify-between pb-2.5 border-b border-slate-800">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center border border-amber-500/20">
+                    <i class="fa-solid fa-building-user text-xs"></i>
+                  </div>
+                  <div>
+                    <div class="text-xs font-bold text-white">Akar Terpasang di Departemen</div>
+                    <div class="text-[10px] text-amber-400/80 font-medium">In-Service Operations</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 font-mono font-bold text-xs text-amber-300">
+                    ${inDeptPCs} PC Terpasang
+                  </span>
+                  <span class="text-[11px] text-slate-400 font-mono">(${deploymentRate}%)</span>
+                </div>
+              </div>
+
+              <!-- Sub-Akar: 9 Departemen Breakdown Grid -->
+              <div class="mt-3.5">
+                <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2.5 flex items-center justify-between">
+                  <span>Percabangan Akar ke 9 Departemen Hotel:</span>
+                  <span class="text-amber-400 font-mono">${activeDeptsCount} dari 9 Departemen Aktif</span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
+                  ${deptBreakdown.map(item => {
+                    const hasPC = item.count > 0;
+                    return `
+                      <div class="p-2.5 rounded-xl ${hasPC ? 'bg-amber-950/20 border-amber-500/40 shadow-sm shadow-amber-500/5' : 'bg-slate-950/40 border-slate-800/80 opacity-70'} border transition hover:border-amber-400/60">
+                        <div class="flex items-center justify-between">
+                          <span class="text-xs font-bold ${hasPC ? 'text-amber-200' : 'text-slate-400'} truncate">${escapeHtml(item.department)}</span>
+                          <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold ${hasPC ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-slate-800 text-slate-500'}">
+                            ${item.count} PC
+                          </span>
+                        </div>
+
+                        ${hasPC ? `
+                          <div class="mt-2 flex flex-wrap gap-1">
+                            ${item.pcs.map(p => `
+                              <span class="inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-900/90 text-amber-200 border border-amber-500/30" title="${escapeHtml(p.name)} (${escapeHtml(p.chipset || '-')})">
+                                <i class="fa-solid fa-desktop text-[8px] text-amber-400"></i>
+                                <span class="truncate max-w-[100px]">${escapeHtml(p.name)}</span>
+                              </span>
+                            `).join('')}
+                          </div>
+                        ` : `
+                          <div class="text-[10px] text-slate-500 mt-1 flex items-center gap-1 font-mono">
+                            <i class="fa-regular fa-circle text-[8px]"></i>
+                            <span>Kapasitas Tersedia</span>
+                          </div>
+                        `}
+                      </div>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  container.innerHTML = statsHtml + treeHtml;
 }
 
 function selectDepartmentAndNavigate(deptName) {
@@ -2331,9 +2621,9 @@ function setPOStatusFilter(status) {
   poStatusFilter = status;
   document.querySelectorAll('.po-filter-btn').forEach(btn => {
     if (btn.dataset.status === status) {
-      btn.className = 'po-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white';
+      btn.className = 'po-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-600 text-white shadow-md shadow-brand-500/25 transition';
     } else {
-      btn.className = 'po-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white';
+      btn.className = 'po-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900/80 border border-slate-700/80 text-slate-300 hover:text-white transition';
     }
   });
   renderPOTable();
@@ -2471,9 +2761,9 @@ function setPrelovedCatFilter(cat) {
   prelovedCategoryFilter = cat;
   document.querySelectorAll('.preloved-cat-pill').forEach(btn => {
     if (btn.dataset.cat === cat) {
-      btn.className = 'preloved-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white';
+      btn.className = 'preloved-cat-pill px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-600 text-white shadow-md shadow-brand-500/25 transition';
     } else {
-      btn.className = 'preloved-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white';
+      btn.className = 'preloved-cat-pill px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900/80 border border-slate-700/80 text-slate-300 hover:text-white transition';
     }
   });
   renderPrelovedTable();
@@ -2575,9 +2865,9 @@ function setMonthlyTab(tabId) {
   currentMonthlyTab = tabId;
   document.querySelectorAll('.monthly-subtab').forEach(btn => {
     if (btn.dataset.tab === tabId) {
-      btn.className = 'monthly-subtab px-4 py-2 rounded-xl text-xs font-semibold bg-brand-600 text-white';
+      btn.className = 'monthly-subtab px-4 py-2 rounded-xl text-xs font-bold bg-brand-600 text-white shadow-md shadow-brand-500/25 transition';
     } else {
-      btn.className = 'monthly-subtab px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 text-slate-400 hover:text-white';
+      btn.className = 'monthly-subtab px-4 py-2 rounded-xl text-xs font-semibold bg-slate-900/80 border border-slate-700/80 text-slate-300 hover:text-white transition';
     }
   });
   renderMonthlyView();
@@ -3379,9 +3669,9 @@ function setPCFilter(filter) {
   pcFilter = filter;
   document.querySelectorAll('.pc-filter-btn').forEach(btn => {
     if (btn.dataset.filter === filter) {
-      btn.className = 'pc-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-600 text-white shadow-md';
+      btn.className = 'pc-filter-btn px-3 py-1.5 rounded-lg text-xs font-bold bg-brand-600 text-white shadow-md shadow-brand-500/25 transition';
     } else {
-      btn.className = 'pc-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white';
+      btn.className = 'pc-filter-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-900/80 border border-slate-700/80 text-slate-300 hover:text-white transition';
     }
   });
   renderPCManagement();
@@ -3390,16 +3680,16 @@ function setPCFilter(filter) {
 function renderSlotMiniChip(label, item, iconClass) {
   if (!item) {
     return `
-      <div class="px-2 py-1 rounded-md bg-slate-900/60 border border-slate-800 text-slate-500 truncate flex items-center gap-1.5">
+      <div class="px-2.5 py-1.5 rounded-lg bg-slate-950/70 border border-slate-800/80 text-slate-500 truncate flex items-center gap-1.5 transition">
         <i class="fa-solid ${iconClass} text-[9px] text-slate-600 shrink-0"></i>
-        <span class="truncate">${label}: -</span>
+        <span class="truncate">${label}: <span class="text-slate-600 italic">None</span></span>
       </div>
     `;
   }
   return `
-    <div class="px-2 py-1 rounded-md bg-slate-900 border border-slate-700/80 text-slate-300 truncate flex items-center gap-1.5" title="${escapeHtml(item.item_name)}">
+    <div class="px-2.5 py-1.5 rounded-lg bg-slate-900/90 border border-slate-700/70 hover:border-indigo-500/50 text-slate-300 truncate flex items-center gap-1.5 transition shadow-sm" title="${escapeHtml(item.item_name)}">
       <i class="fa-solid ${iconClass} text-[9px] text-indigo-400 shrink-0"></i>
-      <span class="font-medium truncate">${label}: ${escapeHtml(item.item_name)}</span>
+      <span class="font-medium truncate"><span class="text-slate-400 font-bold">${label}:</span> ${escapeHtml(item.item_name)}</span>
     </div>
   `;
 }
@@ -3459,18 +3749,23 @@ function renderPCManagement() {
     return `
       <div
         onclick="openModalPCDetail('${pc.id}')"
-        class="glass-panel p-5 rounded-2xl border border-slate-800 hover:border-indigo-500/50 hover:shadow-xl hover:shadow-indigo-500/10 transition flex flex-col justify-between group cursor-pointer"
+        class="stat-card-modern ${isAssigned ? 'border-amber' : 'border-indigo'} p-5 flex flex-col justify-between group cursor-pointer relative overflow-hidden transition-all duration-300"
       >
-        <div>
+        <div class="soft-light-orb -right-12 -top-12 w-32 h-32 ${isAssigned ? 'bg-amber-500/10' : 'bg-indigo-500/15'} group-hover:scale-125 transition-transform duration-500"></div>
+
+        <div class="relative z-10">
           <!-- Header Card -->
           <div class="flex items-start justify-between gap-2 mb-2">
             <div class="flex items-center gap-2.5 min-w-0">
-              <div class="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center shrink-0 group-hover:scale-105 transition">
+              <div class="w-10 h-10 rounded-xl ${isAssigned ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30'} flex items-center justify-center shrink-0 group-hover:scale-110 transition duration-300 shadow-md">
                 <i class="fa-solid fa-desktop text-base"></i>
               </div>
               <div class="min-w-0">
                 <h4 class="text-base font-black text-white truncate tracking-tight">${escapeHtml(pc.name)}</h4>
-                <div class="text-[11px] text-indigo-300 font-mono truncate">${escapeHtml(pc.chipset || '-')}</div>
+                <div class="text-[11px] text-indigo-300 font-mono truncate flex items-center gap-1.5 mt-0.5">
+                  <span class="w-1.5 h-1.5 rounded-full ${isAssigned ? 'bg-amber-400' : 'bg-emerald-400'} animate-pulse"></span>
+                  <span>${escapeHtml(pc.chipset || '-')}</span>
+                </div>
               </div>
             </div>
           </div>
@@ -3478,12 +3773,14 @@ function renderPCManagement() {
           <!-- Status Placement Badge -->
           <div class="mt-2.5">
             ${isAssigned ? `
-              <div class="badge-pill px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 whitespace-nowrap">
-                <i class="fa-solid fa-building mr-1.5 text-[9px]"></i>PC Terpasang di Departemen : ${escapeHtml(pc.department)}
+              <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 whitespace-nowrap shadow-sm">
+                <i class="fa-solid fa-building text-[9px]"></i>
+                <span>PC Terpasang: <strong class="text-white">${escapeHtml(pc.department)}</strong></span>
               </div>
             ` : `
-              <div class="badge-pill px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 whitespace-nowrap">
-                <i class="fa-solid fa-boxes-stacked mr-1.5 text-[9px]"></i>Ready in IT Storage
+              <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 whitespace-nowrap shadow-sm">
+                <i class="fa-solid fa-boxes-stacked text-[9px]"></i>
+                <span>Ready in IT Storage</span>
               </div>
             `}
           </div>
@@ -3500,12 +3797,12 @@ function renderPCManagement() {
         </div>
 
         <!-- Quick Action Footer -->
-        <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-1.5 text-xs" onclick="event.stopPropagation()">
+        <div class="relative z-10 mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between gap-1.5 text-xs" onclick="event.stopPropagation()">
           <div class="flex items-center gap-1.5 flex-1 min-w-0">
             <button
               type="button"
               onclick="openModalPCDetail('${pc.id}')"
-              class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition flex items-center gap-1.5 truncate"
+              class="px-2.5 py-1.5 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-[11px] font-bold transition flex items-center gap-1.5 truncate border border-slate-700/80 hover:border-indigo-500/40"
             >
               <i class="fa-solid fa-sliders text-[10px] text-indigo-400 shrink-0"></i>
               <span class="truncate">Detail & Komponen</span>
@@ -3515,7 +3812,7 @@ function renderPCManagement() {
               <button
                 type="button"
                 onclick="handleRemovePCFromDept('${pc.id}')"
-                class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-semibold transition whitespace-nowrap shrink-0"
+                class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 text-[11px] font-bold transition whitespace-nowrap shrink-0 shadow-sm"
                 title="Lepas PC Dari Departemen"
               >
                 Lepas
@@ -3524,7 +3821,7 @@ function renderPCManagement() {
               <button
                 type="button"
                 onclick="openAssignDeptPrompt('${pc.id}')"
-                class="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-[11px] font-semibold transition whitespace-nowrap shrink-0"
+                class="px-2.5 py-1.5 rounded-lg bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-300 border border-indigo-500/40 text-[11px] font-bold transition whitespace-nowrap shrink-0 shadow-sm"
               >
                 + Pasang ke Dept
               </button>
@@ -3534,7 +3831,7 @@ function renderPCManagement() {
           <button
             type="button"
             onclick="confirmDeletePC('${pc.id}')"
-            class="p-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[11px] transition shrink-0"
+            class="p-2 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 text-[11px] transition shrink-0 shadow-sm"
             title="Delete PC (Semua Komponen Otomatis Kembali ke Inventory)"
           >
             <i class="fa-solid fa-trash-can text-xs"></i>
@@ -4540,25 +4837,30 @@ function renderDepartmentWorkstations(deptName) {
     return `
       <div
         onclick="openModalPCDetail('${pc.id}')"
-        class="glass-panel p-4 rounded-xl border border-slate-800 hover:border-indigo-500/50 hover:shadow-lg transition flex flex-col justify-between group cursor-pointer"
+        class="stat-card-modern border-amber p-4 sm:p-5 flex flex-col justify-between group cursor-pointer relative overflow-hidden transition-all duration-300"
       >
-        <div>
+        <div class="soft-light-orb -right-10 -top-10 w-28 h-28 bg-amber-500/15 group-hover:scale-125 transition-transform duration-500"></div>
+
+        <div class="relative z-10">
           <div class="flex items-center justify-between mb-2">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center text-sm">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30 flex items-center justify-center text-sm shadow-md group-hover:scale-110 transition duration-300">
                 <i class="fa-solid fa-desktop"></i>
               </div>
               <div>
                 <h4 class="text-sm font-black text-white truncate">${escapeHtml(pc.name)}</h4>
-                <div class="text-[10px] text-indigo-300 font-mono">${escapeHtml(pc.chipset || '-')}</div>
+                <div class="text-[10px] text-amber-300/90 font-mono flex items-center gap-1.5 mt-0.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+                  <span>${escapeHtml(pc.chipset || '-')}</span>
+                </div>
               </div>
             </div>
-            <span class="badge-pill px-2 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30 whitespace-nowrap">
+            <span class="px-2.5 py-1 rounded-lg text-[9px] font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30 whitespace-nowrap shadow-sm">
               ${escapeHtml(deptName)}
             </span>
           </div>
 
-          <div class="mt-3 grid grid-cols-2 gap-1 text-[10px]">
+          <div class="mt-3.5 grid grid-cols-2 gap-1.5 text-[10px]">
             ${renderSlotMiniChip('PSU', psuItem, 'fa-bolt')}
             ${renderSlotMiniChip('Storage', storageItem, 'fa-hard-drive')}
             ${renderSlotMiniChip('RAM 1', ram1Item, 'fa-memory')}
@@ -4568,20 +4870,20 @@ function renderDepartmentWorkstations(deptName) {
           </div>
         </div>
 
-        <div class="mt-3 pt-2.5 border-t border-slate-800 flex items-center justify-between gap-1.5" onclick="event.stopPropagation()">
+        <div class="relative z-10 mt-3.5 pt-2.5 border-t border-slate-800/80 flex items-center justify-between gap-1.5" onclick="event.stopPropagation()">
           <div class="flex items-center gap-1.5">
             <button
               type="button"
               onclick="openModalPCDetail('${pc.id}')"
-              class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition flex items-center gap-1"
+              class="px-2.5 py-1 rounded-lg bg-slate-800/90 hover:bg-slate-700 text-slate-200 text-[11px] font-bold transition flex items-center gap-1.5 border border-slate-700/80 hover:border-amber-500/40"
             >
-              <i class="fa-solid fa-sliders text-[10px] text-indigo-400"></i>
+              <i class="fa-solid fa-sliders text-[10px] text-amber-400"></i>
               <span>Detail PC</span>
             </button>
             <button
               type="button"
               onclick="handleRemovePCFromDept('${pc.id}')"
-              class="px-2.5 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[11px] font-semibold transition whitespace-nowrap"
+              class="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 text-[11px] font-bold transition whitespace-nowrap shadow-sm"
             >
               Lepas
             </button>
@@ -4589,7 +4891,7 @@ function renderDepartmentWorkstations(deptName) {
           <button
             type="button"
             onclick="confirmDeletePC('${pc.id}')"
-            class="p-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[11px] transition shrink-0"
+            class="p-1.5 rounded-lg bg-rose-500/15 hover:bg-rose-500/25 text-rose-400 border border-rose-500/30 text-[11px] transition shrink-0 shadow-sm"
             title="Delete PC (Kembalikan Komponen ke Inventory)"
           >
             <i class="fa-solid fa-trash-can text-xs"></i>
@@ -4974,6 +5276,7 @@ window.resetToDefaultCredentials = resetToDefaultCredentials;
 window.copySchemaSQL = copySchemaSQL;
 
 window.toggleMobileSidebar = toggleMobileSidebar;
+window.renderDashboardPCRootTopology = renderDashboardPCRootTopology;
 window.updateHeroGreeting = updateHeroGreeting;
 window.getGreetingPrefix = getGreetingPrefix;
 window.startRealTimeDeviceClock = startRealTimeDeviceClock;

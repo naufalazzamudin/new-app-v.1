@@ -1,5 +1,5 @@
 {
-  "name": "Rattan-Inn Hotel IT Inventory",
+  "name": "Rattan-Inn Hotel IT Assets Control",
   "description": "Rattan-Inn Hotel IT department inventory management system for hotel hardware, refurbished equipment, and spare parts tracking.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
