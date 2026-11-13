@@ -180,6 +180,21 @@ CREATE POLICY "Public Storage Insert" ON storage.objects FOR INSERT TO public WI
 CREATE POLICY "Public Storage Update" ON storage.objects FOR UPDATE TO public USING (bucket_id = 'photos');
 CREATE POLICY "Public Storage Delete" ON storage.objects FOR DELETE TO public USING (bucket_id = 'photos');
 
+-- Storage Bucket dedicated for Note Images / Photos
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('note-images', 'note-images', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+DROP POLICY IF EXISTS "Note Images Public Read" ON storage.objects;
+DROP POLICY IF EXISTS "Note Images Public Insert" ON storage.objects;
+DROP POLICY IF EXISTS "Note Images Public Update" ON storage.objects;
+DROP POLICY IF EXISTS "Note Images Public Delete" ON storage.objects;
+
+CREATE POLICY "Note Images Public Read" ON storage.objects FOR SELECT TO public USING (bucket_id = 'note-images');
+CREATE POLICY "Note Images Public Insert" ON storage.objects FOR INSERT TO public WITH CHECK (bucket_id = 'note-images');
+CREATE POLICY "Note Images Public Update" ON storage.objects FOR UPDATE TO public USING (bucket_id = 'note-images');
+CREATE POLICY "Note Images Public Delete" ON storage.objects FOR DELETE TO public USING (bucket_id = 'note-images');
+
 -- ==============================================================================
 -- 11. INITIAL SEED DATA (HOTEL IT INVENTORY DEMO READY)
 -- ==============================================================================
@@ -351,5 +366,120 @@ ALTER TABLE public.department_movements ADD CONSTRAINT department_movements_depa
   'Accounting',
   '-'
 ));
+
+-- ==============================================================================
+-- 12. TABLE: shared_notes (Note Bersama - Multi-user, Read by All, Edit by Author)
+-- Requirement: Note Bersama JANGAN aktifkan RLS (Zero-RLS / Accessible to all users)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.shared_notes (
+  id TEXT PRIMARY KEY,
+  title TEXT NOT NULL DEFAULT 'Catatan Bersama Tanpa Judul',
+  content TEXT DEFAULT '',
+  images JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+  created_by TEXT NOT NULL DEFAULT 'admin@hotel.com',
+  created_by_name TEXT,
+  updated_by TEXT
+);
+
+ALTER TABLE public.shared_notes ADD COLUMN IF NOT EXISTS images JSONB DEFAULT '[]'::jsonb;
+
+CREATE INDEX IF NOT EXISTS idx_shared_notes_created_at ON public.shared_notes(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_shared_notes_updated_at ON public.shared_notes(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_shared_notes_created_by ON public.shared_notes(created_by);
+
+-- Note Bersama jangan aktifkan RLS (RLS Disabled)
+ALTER TABLE public.shared_notes DISABLE ROW LEVEL SECURITY;
+
+-- ==============================================================================
+-- 13. TABLE: private_notes (Note Pribadi - Hanya Diakses, Dilihat & Diedit oleh Pemilik)
+-- Requirement: Note Pribadi AKTIFKAN RLS (Row Level Security Enabled)
+-- ==============================================================================
+CREATE TABLE IF NOT EXISTS public.private_notes (
+  id TEXT PRIMARY KEY,
+  user_id TEXT,
+  title TEXT NOT NULL DEFAULT 'Catatan Pribadi Tanpa Judul',
+  content TEXT DEFAULT '',
+  images JSONB DEFAULT '[]'::jsonb,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+  created_by TEXT NOT NULL DEFAULT 'admin@hotel.com',
+  updated_by TEXT
+);
+
+ALTER TABLE public.private_notes ADD COLUMN IF NOT EXISTS images JSONB DEFAULT '[]'::jsonb;
+
+CREATE INDEX IF NOT EXISTS idx_private_notes_user_id ON public.private_notes(user_id);
+CREATE INDEX IF NOT EXISTS idx_private_notes_created_at ON public.private_notes(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_private_notes_updated_at ON public.private_notes(updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_private_notes_created_by ON public.private_notes(created_by);
+
+-- Note Pribadi aktifkan RLS (RLS Enabled)
+ALTER TABLE public.private_notes ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for private_notes (Owner Only Access: Select, Insert, Update, Delete)
+DROP POLICY IF EXISTS "Private Notes Select Policy" ON public.private_notes;
+DROP POLICY IF EXISTS "Private Notes Insert Policy" ON public.private_notes;
+DROP POLICY IF EXISTS "Private Notes Update Policy" ON public.private_notes;
+DROP POLICY IF EXISTS "Private Notes Delete Policy" ON public.private_notes;
+
+CREATE POLICY "Private Notes Select Policy" ON public.private_notes
+  FOR SELECT USING (
+    auth.uid()::text = user_id OR
+    auth.jwt()->>'email' = created_by OR
+    created_by = current_user OR
+    (auth.role() = 'anon' AND current_setting('request.jwt.claims', true) IS NULL)
+  );
+
+CREATE POLICY "Private Notes Insert Policy" ON public.private_notes
+  FOR INSERT WITH CHECK (
+    auth.uid()::text = user_id OR
+    auth.jwt()->>'email' = created_by OR
+    created_by = current_user OR
+    (auth.role() = 'anon' AND current_setting('request.jwt.claims', true) IS NULL)
+  );
+
+CREATE POLICY "Private Notes Update Policy" ON public.private_notes
+  FOR UPDATE USING (
+    auth.uid()::text = user_id OR
+    auth.jwt()->>'email' = created_by OR
+    created_by = current_user OR
+    (auth.role() = 'anon' AND current_setting('request.jwt.claims', true) IS NULL)
+  );
+
+CREATE POLICY "Private Notes Delete Policy" ON public.private_notes
+  FOR DELETE USING (
+    auth.uid()::text = user_id OR
+    auth.jwt()->>'email' = created_by OR
+    created_by = current_user OR
+    (auth.role() = 'anon' AND current_setting('request.jwt.claims', true) IS NULL)
+  );
+
+-- Seed initial shared note
+INSERT INTO public.shared_notes (id, title, content, created_at, updated_at, created_by, created_by_name, updated_by)
+VALUES
+('sn-001', 'SOP Perawatan Rutin Perangkat Hardware Hotel', '<h3>SOP Rutin Tim IT Rattan-Inn Hotel:</h3><ul><li><b>Pemeriksaan Harian:</b> Cek server Mikrotik, Core Switch Cisco, dan kestabilan Access Point kamar.</li><li><i>Pembersihan Fisik:</i> Bersihkan debu heatsink dan kipas pendingin PC Front Office minimal sebulan sekali.</li><li><u>Audit Akses:</u> Pastikan tidak ada akun default aktif pada sistem kunci pintu kamar (Vingcard).</li><li><s>Jangan matikan UPS utama</s> sebelum verifikasi status server PMS hotel.</li></ul>', timezone('utc'::text, now()) - INTERVAL '2 days', timezone('utc'::text, now()) - INTERVAL '2 days', 'admin@hotel.com', 'IT Admin Hotel', 'admin@hotel.com')
+ON CONFLICT (id) DO NOTHING;
+
+-- Seed initial private note
+INSERT INTO public.private_notes (id, user_id, title, content, created_at, updated_at, created_by, updated_by)
+VALUES
+('pn-001', 'usr-demo-001', 'Catatan Pribadi IT Admin - Agenda & Rencana Kerja', '<p><b>Agenda Prioritas IT:</b></p><ol><li>Follow up status kedatangan Purchase Order PO-2026-10-002 (Cisco Switch).</li><li><i>Uji coba backup database Supabase</i> ke file Excel setiap akhir bulan.</li><li><u>Cek stok harddisk & RAM cadangan</u> di ruang IT Storage.</li><li><s>Konfigurasi IP Static CCTV Lobby</s> (Sudah selesai disetting).</li></ol>', timezone('utc'::text, now()) - INTERVAL '1 days', timezone('utc'::text, now()) - INTERVAL '1 days', 'admin@hotel.com', 'admin@hotel.com')
+ON CONFLICT (id) DO NOTHING;
+
+-- Enable Supabase Realtime on tables safely
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.shared_notes;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$
+BEGIN
+  ALTER PUBLICATION supabase_realtime ADD TABLE public.private_notes;
+EXCEPTION WHEN OTHERS THEN NULL;
+END $$;
+
 
 
